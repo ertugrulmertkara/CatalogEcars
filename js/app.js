@@ -1,8 +1,17 @@
-let cars = JSON.parse(localStorage.getItem("cars")) || [];
+let cars = [];
+const API_URL = "http://localhost:3000/api/cars";
 
-function saveCars() {
-  localStorage.setItem("cars", JSON.stringify(cars));
+async function fetchCars(){
+  try{
+    const response = await fetch(API_URL);
+    cars = await response.json();
+    renderCars();
+  }
+  catch(error){
+    console.error("Arabalar yüklenirken hata oluştu.", error(message))
+  }
 }
+
 
 const toggleBtn = document.getElementById("toggle-form-btn");
 const formPanel = document.getElementById("add-car-panel");
@@ -100,42 +109,6 @@ function renderCars() {
     updateStats();
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 tbody.addEventListener("click", function (e) {
   if (e.target.classList.contains("btn-icon")) {
     const id = Number(e.target.dataset.id);
@@ -176,5 +149,4 @@ function updateStats() {
 filterBody.addEventListener("change", renderCars);
 filterStatus.addEventListener("change", renderCars);
 sortBy.addEventListener("change", renderCars);
-
-renderCars();
+fetchCars();

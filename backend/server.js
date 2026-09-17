@@ -4,6 +4,7 @@ const cors = require("cors"); //frontendin backend e istek atmasını sağlayan 
 const app = express(); // expressi kur
 const PORT = 3000;
 
+
 app.use(cors());
 app.use(express.json());
 let cars = []; // araçları ram'de tutuyoruz , veritabanı yok 
@@ -58,15 +59,18 @@ app.delete("/api/cars:id", function(req,res){
     res.json({message : "Araç Silinmiştir."})
 });
 
-app.patch("/api/cars/:id/status", function(req,res){
+app.patch("/api/cars/:id/status", function(req,res){ //: değişken istiyor demek 
     const id = Number(req.params.id);
     const car = cars.find(function(c){
-        return c.id === id;
+        return c.id === id; // tek tek her id yi tarıyor bulduğunu car a atıyor
     });
 
     if(!car){
         return res.status(404).json({error: "Araç Bulunamadı."});
      }
-     car.status = req.body.status;
+     car.status = req.body.status; // statusunu request ile değiştiriyor 
      res.json(car);
 })
+
+
+
