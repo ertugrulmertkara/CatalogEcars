@@ -40,3 +40,6 @@ status: catalog | shortlist | testDrive | rejected
 ## Kapsam dışı
 
 Karşılaştırma ekranı, fiyat geçmişi ve grafik,
+
+## Hata 
+Css te important sorunu 
