@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rehber — CatalogEcars</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="app-page">
+
+  <header class="topbar">
+    <a href="index.html" class="topbar-brand">CatalogEcars</a>
+  </header>
+
+  <div class="container">
+
+    <section class="summary" aria-label="Özet">
+      <div class="summary-card">
+        <span class="summary-value" id="stat-total">0</span>
+        <span class="summary-label">Toplam araç</span>
+      </div>
+      <div class="summary-card">
+        <span class="summary-value" id="stat-shortlist">0</span>
+        <span class="summary-label">Kısa listede</span>
+      </div>
+      <div class="summary-card">
+        <span class="summary-value" id="stat-rejected">0</span>
+        <span class="summary-label">Elenen</span>
+      </div>
+    </section>
+    
+    <button type="button" id="toggle-form-btn" class="btn btn-primary">
+      + Araç ekle
+    </button>
+
+    <section class="panel" id="add-car-panel" aria-labelledby="form-heading" hidden>
+      <h2 id="form-heading" class="panel-title">Araç ekle</h2>
+
+      <form id="car-form" class="car-form">
+        <div class="field">
+          <label for="brand">Marka</label>
+          <select id="brand" name="brand" required>
+            <option value="">Seçiniz</option>
+            <option value="Tesla">Tesla</option>
+            <option value="BYD">BYD</option>
+            <option value="Togg">Togg</option>
+            <option value="Volkswagen">Volkswagen</option>
+            <option value="Hyundai">Hyundai</option>
+            <option value="Kia">Kia</option>
+            <option value="Renault">Renault</option>
+            <option value="Peugeot">Peugeot</option>
+            <option value="Fiat">Fiat</option>
+            <option value="MG">MG</option>
+            <option value="Audi">Audi</option>
+            <option value="BMW">BMW</option>
+            <option value="Mercedes-Benz">Mercedes-Benz</option>
+            <option value="Volvo">Volvo</option>
+            <option value="Skoda">Skoda</option>
+            <option value="Cupra">Cupra</option>
+            <option value="Opel">Opel</option>
+            <option value="Citroën">Citroën</option>
+            <option value="Nissan">Nissan</option>
+            <option value="Ford">Ford</option>
+            <option value="Diğer">Diğer</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="model">Model</label>
+          <input type="text" id="model" name="model" required list="model-suggestions" placeholder="Model 3 Long Range">
+          <datalist id="model-suggestions">
+            <option value="Model 3">
+            <option value="Model Y">
+            <option value="Ioniq 5">
+            <option value="Ioniq 6">
+            <option value="EV6">
+            <option value="Niro EV">
+            <option value="ID.4">
+            <option value="ID.3">
+            <option value="T10X">
+            <option value="Atto 3">
+            <option value="Seal">
+          </datalist>
+        </div>
+
+        <div class="field field-sm">
+          <label for="year">Yıl</label>
+          <input type="number" id="year" name="year" required min="2020" max="2027" placeholder="2024">
+        </div>
+
+        <div class="field field-sm">
+          <label for="bodyType">Kasa tipi</label>
+          <select id="bodyType" name="bodyType" required>
+            <option value="hatchback">Hatchback</option>
+            <option value="sedan">Sedan</option>
+            <option value="SUV">SUV</option>
+            <option value="crossover">Crossover</option>
+            <option value="station">Station</option>
+          </select>
+        </div>
+
+        <div class="field field-sm">
+          <label for="drivetrain">Çekiş</label>
+          <select id="drivetrain" name="drivetrain">
+            <option value="">Belirtilmedi</option>
+            <option value="RWD">RWD</option>
+            <option value="AWD">AWD</option>
+          </select>
+        </div>
+
+        <div class="field field-sm">
+          <label for="range">Menzil <span class="unit">km, WLTP</span></label>
+          <input type="number" id="range" name="range" required min="0" placeholder="520">
+        </div>
+
+        <div class="field field-sm">
+          <label for="battery">Batarya <span class="unit">kWh</span></label>
+          <input type="number" id="battery" name="battery" min="0" placeholder="75">
+        </div>
+
+        <div class="field field-sm">
+          <label for="price">Fiyat <span class="unit">TL</span></label>
+          <input type="number" id="price" name="price" required min="0" placeholder="1850000">
+        </div>
+
+        <div class="field field-sm">
+          <label for="status">Durum</label>
+          <select id="status" name="status" required>
+            <option value="catalog" selected>Katalog</option>
+            <option value="shortlist">Kısa liste</option>
+            <option value="testDrive">Test sürüşü</option>
+            <option value="rejected">Elendi</option>
+          </select>
+        </div>
+
+        <div class="field field-wide">
+          <label for="imageUrl">Fotoğraf <span class="unit">URL</span></label>
+          <input type="url" id="imageUrl" name="imageUrl" placeholder="https://ornek.com/araba.jpg">
+        </div>
+
+        <div class="field field-wide">
+          <label for="link">Link</label>
+          <input type="url" id="link" name="link" placeholder="https://">
+        </div>
+
+        <div class="field field-wide">
+          <label for="note">Not</label>
+          <textarea id="note" name="note" rows="2" placeholder="Bagaj küçük, arka koltuk dar"></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Ekle</button>
+          <button type="reset" class="btn btn-ghost">Temizle</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="filters" aria-label="Filtreler">
+      <div class="field field-sm">
+        <label for="filter-body">Kasa</label>
+        <select id="filter-body">
+          <option value="all">Hepsi</option>
+          <option value="hatchback">Hatchback</option>
+          <option value="sedan">Sedan</option>
+          <option value="SUV">SUV</option>
+          <option value="crossover">Crossover</option>
+          <option value="station">Station</option>
+        </select>
+      </div>
+
+      <div class="field field-sm">
+        <label for="filter-status">Durum</label>
+        <select id="filter-status">
+          <option value="all">Hepsi</option>
+          <option value="catalog">Katalog</option>
+          <option value="shortlist">Kısa liste</option>
+          <option value="testDrive">Test sürüşü</option>
+          <option value="rejected">Elendi</option>
+        </select>
+      </div>
+
+      <div class="field field-sm">
+        <label for="sort-by">Sırala</label>
+        <select id="sort-by">
+          <option value="createdAt">Eklenme</option>
+          <option value="price">Fiyat</option>
+          <option value="range">Menzil</option>
+          <option value="year">Yıl</option>
+        </select>
+      </div>
+    </section>
+
+    <main class="car-list">
+      <table class="car-table">
+        <caption class="sr-only">Elektrikli araç listesi</caption>
+        <thead>
+          <tr>
+            <th scope="col"><span class="sr-only">Fotoğraf</span></th>
+            <th scope="col">Araç</th>
+            <th scope="col">Yıl</th>
+            <th scope="col">Kasa</th>
+            <th scope="col">Menzil</th>
+            <th scope="col">Fiyat</th>
+            <th scope="col">Durum</th>
+            <th scope="col"><span class="sr-only">İşlemler</span></th>
+          </tr>
+        </thead>
+        <tbody id="car-tbody">
+
+          <tr>
+            <td data-label="Fotoğraf">
+              <img src="https://placehold.co/60x40" alt="Tesla Model 3" class="car-thumb">
+            </td>
+            <td data-label="Araç">
+              <strong>Tesla</strong> Model 3 Long Range
+              <span class="row-note">Bagaj küçük</span>
+            </td>
+            <td data-label="Yıl">2024</td>
+            <td data-label="Kasa">Sedan</td>
+            <td data-label="Menzil">520 km</td>
+            <td data-label="Fiyat">1.850.000 TL</td>
+            <td data-label="Durum"><span class="badge badge-shortlist">Kısa liste</span></td>
+            <td class="row-actions">
+              <button type="button" class="btn-icon" aria-label="Sil">Sil</button>
+            </td>
+          </tr>
+
+          <tr>
+            <td data-label="Fotoğraf">
+              <img src="https://placehold.co/60x40" alt="Hyundai Ioniq 5" class="car-thumb">
+            </td>
+            <td data-label="Araç"><strong>Hyundai</strong> Ioniq 5</td>
+            <td data-label="Yıl">2023</td>
+            <td data-label="Kasa">Crossover</td>
+            <td data-label="Menzil">481 km</td>
+            <td data-label="Fiyat">2.100.000 TL</td>
+            <td data-label="Durum"><span class="badge badge-catalog">Katalog</span></td>
+            <td class="row-actions">
+              <button type="button" class="btn-icon" aria-label="Sil">Sil</button>
+            </td>
+          </tr>
+
+          <tr class="is-rejected">
+            <td data-label="Fotoğraf">
+              <img src="https://placehold.co/60x40" alt="Togg T10X" class="car-thumb">
+            </td>
+            <td data-label="Araç"><strong>Togg</strong> T10X V2</td>
+            <td data-label="Yıl">2024</td>
+            <td data-label="Kasa">SUV</td>
+            <td data-label="Menzil">523 km</td>
+            <td data-label="Fiyat">1.650.000 TL</td>
+            <td data-label="Durum"><span class="badge badge-rejected">Elendi</span></td>
+            <td class="row-actions">
+              <button type="button" class="btn-icon" aria-label="Sil">Sil</button>
+            </td>
+          </tr>
+
+        </tbody>
+      </table>
+    </main>
+
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
