@@ -24,6 +24,9 @@ body {
   background: var(--color-bg);
   color: var(--color-text);
   line-height: 1.6;
+  min-height: 100vh;
+  overflow-y: auto;
+
 }
 
 
@@ -225,6 +228,13 @@ label {
   background: rgba(239, 68, 68, 0.15);
   color: #f5a3a3;
 }
+
+.badge-testDrive {
+  background: rgba(234, 179, 8, 0.15);
+  color: #fbbf24;
+}
+
+
 .car-table tr.is-rejected {
   opacity: 0.5;
 }
@@ -260,6 +270,26 @@ label {
   color: var(--color-text-muted);
   padding: 40px 0;
 }
+
+.filters {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 12px;
+}
+
+.panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space);
+}
+
 
 @media (max-width: 768px) {
   .car-form {
