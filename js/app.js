@@ -2,13 +2,18 @@ let cars = [];
 const API_URL = "http://localhost:3000/api/cars";
 
 async function fetchCars(){
+
   try{
-    const response = await fetch(API_URL);
+    const body = filterBody.value;
+    const status = filterStatus.value;
+    const sort = sortBy.value;
+    const queryUrl = `${API_URL}?bodyType=${body}&status=${status}&sort=${sort}`;
+    const response = await fetch(queryUrl); // responselar her zaman düz metindir 
     cars = await response.json();
     renderCars();
   }
   catch(error){
-    console.error("Arabalar yüklenirken hata oluştu.", error(message))
+    console.error("Arabalar yüklenirken hata oluştu.", error.message)
   }
 }
 
@@ -32,8 +37,9 @@ toggleBtn.addEventListener("click", function () {
 
 
 const carForm = document.getElementById("car-form");
-carForm.addEventListener("submit", function (e) {
+carForm.addEventListener("submit",async function (e) { // içine await yazıyorsak async functiondur
   e.preventDefault();
+
   const newCar = {
     id: Date.now(),
     brand: document.getElementById("brand").value,
@@ -50,13 +56,31 @@ carForm.addEventListener("submit", function (e) {
     note: document.getElementById("note").value,
     createdAt: Date.now(),
   };
-  cars.push(newCar);
-  saveCars();
-  renderCars();
-  carForm.reset();
-  formPanel.hidden = true;
-  toggleBtn.textContent = "+ Araç ekle";
+  try{
+    const response = await fetch(API_URL , { //git isteği getir(fetch) , (await) sakın boş gelme bekle
+      method: "POST" , //veriyi yaz
+      headers: {
+        "Content-Type": "application/json" // içindeki veri json 
+      },
+      body: JSON.stringify(newCar) // obje taşıyamaz bu yüzden stringify ile metin kutusuna çeviriyoruz.
+    });
+    if(response.ok){
+      fetchCars();
+      carForm.reset();
+      formPanel.hidden = true;
+      toggleBtn.textContent = "+ Araç ekle";
+    }
+    else{
+      console.error("Araç eklenirken bir hata oluştu.")
+
+    }
+    }
+
+    catch (error){
+        console.error("Sunucuya bağlanılamadı" , error);
+    }
 });
+
 
 
 const tbody = document.getElementById("car-tbody");
@@ -69,18 +93,7 @@ const statusLabels = {
 
 function renderCars() {
   tbody.innerHTML = "";
-  let filtered = cars.filter(function (car) {
-    const bodyOk = filterBody.value === "all" || car.bodyType === filterBody.value;
-    const statusOk = filterStatus.value === "all" || car.status === filterStatus.value;
-    return bodyOk && statusOk;
-  });
-
-  filtered.sort(function (a, b) {
-    if (sortBy.value === "price") return a.price - b.price;
-    if (sortBy.value === "range") return b.range - a.range;
-    if (sortBy.value === "year") return b.year - a.year;
-    return b.createdAt - a.createdAt;
-  });
+ 
   if (cars.length === 0) {
     tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Henüz araç eklenmedi.</td></tr>';
     return;
@@ -109,28 +122,50 @@ function renderCars() {
     updateStats();
 }
 
-tbody.addEventListener("click", function (e) {
-  if (e.target.classList.contains("btn-icon")) {
+tbody.addEventListener("click",async function (e) {
+   if (e.target.classList.contains("btn-icon")) {
     const id = Number(e.target.dataset.id);
-    cars = cars.filter(function (car) {
-      return car.id !== id;
-    });
-    saveCars();
-    renderCars();
+    
+    try {
+      // 1. Backend'e "Bu id'li aracı sil" isteği atıyoruz
+      const response = await fetch(API_URL + "/" + id, {
+        method: "DELETE"
+      });
+      // 2. Silme başarılıysa tabloyu güncelle
+      if (response.ok) {
+        fetchCars(); 
+      } else {
+        console.error("Araç silinirken hata oluştu.");
+      }
+    } catch (error) {
+      console.error("Sunucuya bağlanılamadı:", error);
+    }
   }
-    else if (e.target.classList.contains("badge")) {
+     else if (e.target.classList.contains("badge")) {
     const id = Number(e.target.closest("tr").querySelector(".btn-icon").dataset.id);
     const statusOrder = ["catalog", "shortlist", "testDrive", "rejected"];
-
     const car = cars.find(function (c) {
       return c.id === id;
     });
-
     const currentIndex = statusOrder.indexOf(car.status);
-    car.status = statusOrder[(currentIndex + 1) % statusOrder.length];
-
-    saveCars();
-    renderCars();
+    const newStatus = statusOrder[(currentIndex + 1) % statusOrder.length];
+    try {
+      // Backend'e PATCH isteği at (sadece statüyü gönderiyoruz)
+      const response = await fetch(API_URL + "/" + id + "/status", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+      if (response.ok) {
+        fetchCars(); // Başarılıysa listeyi güncelle
+      } else {
+        console.error("Durum güncellenemedi.");
+      }
+    } catch (error) {
+      console.error("Sunucuya bağlanılamadı:", error);
+    }
   }
 });
 

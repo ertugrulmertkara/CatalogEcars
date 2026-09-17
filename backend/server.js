@@ -10,17 +10,43 @@ app.use(express.json());
 let cars = []; // araçları ram'de tutuyoruz , veritabanı yok 
 let nextId = 1; // her yeni araça unique id
 
-app.get("/api/ping" , function(req,res){ // req: sipariş fişi , res: tepsi 
-    res.json({  message: "pong"});
-});
 
 app.listen(PORT, function(){
     console.log("Sunucu Çalışıyor: http://localhost:" + PORT);
 });
 
 app.get("/api/cars", function(req,res){
-    res.json(cars);
-})
+  const bodyType = req.query.bodyType;
+  const status = req.query.status;
+  const sort = req.query.sort;
+
+  let filteredCars = [...cars];
+
+  if (bodyType && bodyType !== "all") {
+    filteredCars = filteredCars.filter(function (car) {
+      return car.bodyType === bodyType;
+    });
+  }
+
+
+   if (status && status !== "all") {
+    filteredCars = filteredCars.filter(function (car) {
+      return car.status === status;
+    });
+  }
+
+  if (sort) {
+    filteredCars.sort(function (a, b) {
+      if (sort === "price") return a.price - b.price;
+      if (sort === "range") return b.range - a.range;
+      if (sort === "year") return b.year - a.year;
+      return b.createdAt - a.createdAt; // Varsayılan: Eklenme sırası
+    });
+  }
+
+   res.json(filteredCars);
+});
+
 
 app.post("/api/cars", function(req,res){
 const car = {
