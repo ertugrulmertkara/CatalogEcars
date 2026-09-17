@@ -34,13 +34,16 @@ body {
   min-height: 100vh;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   padding: var(--space);
+  background: url("../assets/hero.png") center center / cover no-repeat;
+  background-color: var(--color-bg);
 }
-
 .landing-content {
-  max-width: 520px;
-  text-align: center;
+  max-width: 480px;
+  text-align: left;
+  padding: 48px;
+  margin-left: 5%;
 }
 
 .landing-title {
@@ -154,6 +157,12 @@ input[type="number"]::-webkit-inner-spin-button {
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+.landing-hero {
+  max-width: 360px;
+  width: 100%;
+  margin-bottom: 24px;
+  border-radius: 12px;
 }
 
 select,
