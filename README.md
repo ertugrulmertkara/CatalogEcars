@@ -101,7 +101,19 @@ fiyat, durum, fotoğraf, link, not).
 - [ ] Frontend'i `localStorage`'dan bu API'ye bağla (`fetch` ile)
 - [ ] Filtreleme/sıralama mantığını backend'e taşı (bkz. Mimari Kararlar)
 - [ ] Hata yönetimi: API hata dönerse frontend'de kullanıcıya mesaj göster
-- [ ] `README.md`'ye API dokümantasyonunu ekle
+---
+
+Backend tarafında `Node.js` ve `Express` kullanılarak hazırlanan REST API uç noktaları (Endpoints) aşağıdadır:
+
+**Temel URL:** `http://localhost:3000/api`
+
+| Metod | Endpoint | Açıklama | Gönderilecek Veri (Body) |
+|---|---|---|---|
+| `GET` | `/ping` | Sunucunun çalışıp çalışmadığını test eder. | - |
+| `GET` | `/cars` | Sistemdeki tüm araçların listesini getirir. | - |
+| `POST` | `/cars` | Sisteme yeni bir araç ekler. | `{ brand, model, year, price, ... }` |
+| `PATCH` | `/cars/:id/status` | Belirtilen ID'ye sahip aracın durumunu günceller. | `{ status: "shortlist" }` |
+| `DELETE` | `/cars/:id` | Belirtilen ID'ye sahip aracı sistemden tamamen siler. | - |
 
 ### Hafta 4 — Veritabanı, Docker, Deployment
 
