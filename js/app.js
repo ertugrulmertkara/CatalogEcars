@@ -41,7 +41,6 @@ carForm.addEventListener("submit",async function (e) { // içine await yazıyors
   e.preventDefault();
 
   const newCar = {
-    id: Date.now(),
     brand: document.getElementById("brand").value,
     model: document.getElementById("model").value,
     year: Number(document.getElementById("year").value),
@@ -54,7 +53,7 @@ carForm.addEventListener("submit",async function (e) { // içine await yazıyors
     imageUrl: document.getElementById("imageUrl").value,
     link: document.getElementById("link").value,
     note: document.getElementById("note").value,
-    createdAt: Date.now(),
+  
   };
   try{
     const response = await fetch(API_URL , { //git isteği getir(fetch) , (await) sakın boş gelme bekle
@@ -114,7 +113,7 @@ function renderCars() {
       '<td data-label="Menzil">' + car.range + " km</td>" +
       '<td data-label="Fiyat">' + car.price.toLocaleString("tr-TR") + " TL</td>" +
       '<td data-label="Durum"><span class="badge badge-' + car.status + '">' + statusLabels[car.status] + "</span></td>" + 
-      '<td class="row-actions"><button type="button" class="btn-icon" data-id="' + car.id + '">Sil</button></td>';
+      '<td class="row-actions"><button type="button" class="btn-icon" data-id="' + car._id + '">Sil</button></td>';
 
     tbody.appendChild(tr);
   });
@@ -124,7 +123,7 @@ function renderCars() {
 
 tbody.addEventListener("click",async function (e) {
    if (e.target.classList.contains("btn-icon")) {
-    const id = Number(e.target.dataset.id);
+    const id = e.target.dataset.id;
     
     try {
       // 1. Backend'e "Bu id'li aracı sil" isteği atıyoruz
@@ -142,10 +141,10 @@ tbody.addEventListener("click",async function (e) {
     }
   }
      else if (e.target.classList.contains("badge")) {
-    const id = Number(e.target.closest("tr").querySelector(".btn-icon").dataset.id);
+    const id = e.target.closest("tr").querySelector(".btn-icon").dataset.id;
     const statusOrder = ["catalog", "shortlist", "testDrive", "rejected"];
     const car = cars.find(function (c) {
-      return c.id === id;
+      return c._id === id;
     });
     const currentIndex = statusOrder.indexOf(car.status);
     const newStatus = statusOrder[(currentIndex + 1) % statusOrder.length];
@@ -181,7 +180,7 @@ function updateStats() {
   }).length;
 }
 
-filterBody.addEventListener("change", renderCars);
-filterStatus.addEventListener("change", renderCars);
-sortBy.addEventListener("change", renderCars);
+filterBody.addEventListener("change", fetchCars);
+filterStatus.addEventListener("change", fetchCars);
+sortBy.addEventListener("change", fetchCars);
 fetchCars();
