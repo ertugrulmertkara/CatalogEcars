@@ -1,0 +1,11 @@
+services:
+  db:
+    image: mongo:latest
+    container_name: evcars_mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodata:/data/db
+volumes:
+  mongodata:
