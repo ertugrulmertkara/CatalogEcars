@@ -301,6 +301,27 @@ label {
 
 
 @media (max-width: 768px) {
+    .landing {
+    align-items: flex-start;
+    padding: 16px;
+    padding-top: 25vh;
+  }
+
+  .landing-content {
+    max-width: 100%;
+    padding: 20px;
+    margin-left: 0;
+    text-align: center;
+  }
+
+  .landing-title {
+    font-size: 1.6rem;
+  }
+
+  .landing-subtitle {
+    font-size: 0.9rem;
+    margin-bottom: 24px;
+  }
   .car-form {
     grid-template-columns: 1fr;
   }
