@@ -1,5 +1,5 @@
 let cars = [];
-const API_URL = "http://localhost:3000/api/cars";
+const API_URL = "https://catalogecars.onrender.com/api/cars";
 
 async function fetchCars(){
 
