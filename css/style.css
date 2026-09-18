@@ -355,3 +355,18 @@ label {
     border-radius: 0 !important;
   }
 }
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin: 1.5rem 0 3rem;
+}
+
+.page-info {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #4b5563;
+}
+
