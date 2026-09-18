@@ -1,5 +1,13 @@
 let cars = [];
+let currentPage = 1;
+const itemsPerPage = 10;
 const API_URL = "https://catalogecars.onrender.com/api/cars";
+
+function getOptimizedImageUrl(url) {
+  if (!url || !url.startsWith("http")) return "https://placehold.co/60x40";
+  if (url.includes("ui-avatars.com")) return url;
+  return "https://images.weserv.nl/?url=" + encodeURIComponent(url) + "&w=120&h=80&fit=cover&output=webp";
+}
 
 async function fetchCars(){
 
@@ -10,6 +18,7 @@ async function fetchCars(){
     const queryUrl = `${API_URL}?bodyType=${body}&status=${status}&sort=${sort}`;
     const response = await fetch(queryUrl); // responselar her zaman düz metindir 
     cars = await response.json();
+    currentPage = 1; // Yeni filtre geldiğinde 1. sayfadan başla
     renderCars();
   }
   catch(error){
@@ -91,22 +100,29 @@ const statusLabels = {
 };
 
 function renderCars() {
-  tbody.innerHTML = "";
- 
+     tbody.innerHTML = "";
   if (cars.length === 0) {
     tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Henüz araç eklenmedi.</td></tr>';
+    document.getElementById("page-info").textContent = "Sayfa 0 / 0";
+    document.getElementById("prev-page-btn").disabled = true;
+    document.getElementById("next-page-btn").disabled = true;
     return;
   }
-
-  cars.forEach(function (car) {
+  // --- Sayfalama Matematigi ---
+  const totalPages = Math.ceil(cars.length / itemsPerPage);
+  if (currentPage > totalPages) currentPage = totalPages;
+  if (currentPage < 1) currentPage = 1;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentCars = cars.slice(startIndex, endIndex); 
+  // Tabloya sadece o 10 arabayı çiziyoruz
+  currentCars.forEach(function (car) {
     const tr = document.createElement("tr");
-
     if (car.status === "rejected") {
       tr.classList.add("is-rejected");
     }
-
     tr.innerHTML =
-      '<td data-label="Fotoğraf"><img src="' + (car.imageUrl || "https://placehold.co/60x40") + '" alt="' + car.brand + '" class="car-thumb"></td>' +
+      '<td data-label="Fotoğraf"><img src="' + getOptimizedImageUrl(car.imageUrl) + '" alt="' + car.brand + '" class="car-thumb" loading="lazy"></td>' +
       '<td data-label="Araç"><strong>' + car.brand + "</strong> " + car.model + (car.note ? '<span class="row-note">' + car.note + "</span>" : "") + "</td>" +
       '<td data-label="Yıl">' + car.year + "</td>" +
       '<td data-label="Kasa">' + car.bodyType + "</td>" +
@@ -114,12 +130,15 @@ function renderCars() {
       '<td data-label="Fiyat">' + car.price.toLocaleString("tr-TR") + " TL</td>" +
       '<td data-label="Durum"><span class="badge badge-' + car.status + '">' + statusLabels[car.status] + "</span></td>" + 
       '<td class="row-actions"><button type="button" class="btn-icon" data-id="' + car._id + '">Sil</button></td>';
-
     tbody.appendChild(tr);
   });
+  // Butonları ve sayfa yazısını güncelle
+  document.getElementById("page-info").textContent = "Sayfa " + currentPage + " / " + totalPages;
+  document.getElementById("prev-page-btn").disabled = (currentPage === 1);
+  document.getElementById("next-page-btn").disabled = (currentPage === totalPages);
+  updateStats();
+  }
 
-    updateStats();
-}
 
 tbody.addEventListener("click",async function (e) {
    if (e.target.classList.contains("btn-icon")) {
@@ -184,3 +203,21 @@ filterBody.addEventListener("change", fetchCars);
 filterStatus.addEventListener("change", fetchCars);
 sortBy.addEventListener("change", fetchCars);
 fetchCars();
+
+// --- Sayfalama Buton Dinleyicileri ---
+document.getElementById("prev-page-btn").addEventListener("click", function () {
+  if (currentPage > 1) {
+    currentPage--;
+    renderCars();
+    window.scrollTo({ top: 0, behavior: "smooth" }); // Sayfanın en tepesine yumuşakça kaydır
+  }
+});
+
+document.getElementById("next-page-btn").addEventListener("click", function () {
+  const totalPages = Math.ceil(cars.length / itemsPerPage);
+  if (currentPage < totalPages) {
+    currentPage++;
+    renderCars();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+});
