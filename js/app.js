@@ -5,8 +5,7 @@ const API_URL = "https://catalogecars.onrender.com/api/cars";
 
 function getOptimizedImageUrl(url) {
   if (!url || !url.startsWith("http")) return "https://placehold.co/60x40";
-  if (url.includes("ui-avatars.com")) return url;
-  return "https://images.weserv.nl/?url=" + encodeURIComponent(url) + "&w=120&h=80&fit=cover&output=webp";
+  return url;
 }
 
 async function fetchCars(){
@@ -121,8 +120,9 @@ function renderCars() {
     if (car.status === "rejected") {
       tr.classList.add("is-rejected");
     }
+    const fallbackUrl = "https://ui-avatars.com/api/?name=" + encodeURIComponent(car.brand) + "&background=random&size=100";
     tr.innerHTML =
-      '<td data-label="Fotoğraf"><img src="' + getOptimizedImageUrl(car.imageUrl) + '" alt="' + car.brand + '" class="car-thumb" loading="lazy"></td>' +
+      '<td data-label="Fotoğraf"><img src="' + getOptimizedImageUrl(car.imageUrl) + '" alt="' + car.brand + '" class="car-thumb" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src=\'' + fallbackUrl + '\'"></td>' +
       '<td data-label="Araç"><strong>' + car.brand + "</strong> " + car.model + (car.note ? '<span class="row-note">' + car.note + "</span>" : "") + "</td>" +
       '<td data-label="Yıl">' + car.year + "</td>" +
       '<td data-label="Kasa">' + car.bodyType + "</td>" +
