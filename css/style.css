@@ -1,3 +1,88 @@
+/* css'de external bağlantı:<link rel="stylesheet" href="css/style.css"> , html de head kısmına yazılır.  */
+/* 
+1: tag seçici
+ h1 { 
+  color: red; 
+}
+
+2:Id seçici/ tek kutu seçer
+#car-form { 
+  border: 1px solid black; 
+}
+
+3:class seçici
+.btn { 
+  background-color: blue; 
+}
+*/
+
+/* Combining selectors
+.car-table .car-thumb { git car table classı bul içindeki car thumbda işlem yap 
+  width: 100%;
+}
+*/
+
+
+/*Css için ekrandaki her şey bir box tır ; 4 katmanı vardır
+Boyutlar
+Padding : iç boşluk , içerik ile kutu arası mesafedir
+Border  : sınır , çerçeve ; kutunun dış duvarıdır
+Margin  : dış boşluk ; kutunun diğer kutular ile mesafesidir
+*/
+
+/* Box Types 
+display:block , gelen her şeyi alt satıra atar
+display:inline , içindeki yazı kadar yer kapar boyutu yoktur
+display inline-block , hem yan yan dizilir hemde boyutu vardır
+*/
+
+/* Absolute Positioning 
+position: absolute , diğer kutular onu görmez hayalet gibidir , diğer elemanların üzerine çıkabilir 
+position: relative , İçindeki uçan (absolute) elemanların ekranın köşelerine kaçmasını engelleyen, onlara sınır çizen ve liman görevi gören komuttur.
+Üst üste binen tasarımlarda her zaman Dış Kutu = Relative, İç Kutu = Absolute olur.
+*/
+
+/* Pseudo - elements
+::before (Kutunun veya yazının hemen BAŞINA sahte bir eleman koyar)
+::after (Kutunun veya yazının hemen SONUNA sahte bir eleman koyar)
+content kesinlikle olmalıdır
+*/
+
+/* Box sizing
+  box-sizing: border-box; Sayfadaki tüm (*) kutulara söylüyorum! Size verdiğim Padding'leri kutuyu büyüterek dışarı doğru değil, kutunun içine doğru şişirerek verin. Benim verdiğim 100px genişliği asla aşmayın! 
+*/ 
+
+/* FLEXBOX
+flex-direction: row; (Varsayılan): Çocukları soldan sağa yan yana dizer.
+flex-direction: column; Çocukları yukarıdan aşağıya alt alta dizer.
+justify-content: flex-start; Hepsini en sola yapıştırır.
+justify-content: center; Hepsini tam ortaya toplar.
+justify-content: flex-end; Hepsini en sağa yapıştırır.
+justify-content: space-between; En baştakini en sola, en sondakini en sağa yapıştırır; ortadakileri eşit aralıkla dağıt
+align-items: center; Bütün çocukları dikey olarak (alt ve üst boşlukları eşitleyerek) tam ortaya hizalar.
+
+MÜKEMMEL ORTALAMA SIRRI: Bir yazıyı veya kutuyu bir alanın TAM ortasına (hem yatay hem dikey) getirmek için ebeveyne şu üçlüyü verirsin: display: flex; justify-content: center; align-items: center;
+
+*/
+
+/* CSS GRID
+  Yanyana 3 sütun olsun: 1.si 100px, 2.si 200px, 3.sü kalan tüm alanı kaplasın
+  grid-template-columns: 100px 200px 1fr; 
+  
+  Alt alta 2 satır olsun: İkisi de 150px yüksekliğinde olsun
+  grid-template-rows: 150px 150px;
+*/
+
+/* MEDIA QUERIES
+
+media (max-width: 768px) {
+  .ana-kutu {
+    flex-direction: column; /* Mobilde yer dar, alt alta diz!
+*/
+
+
+
+
 :root {
   --color-bg: #0b1120;
   --color-surface: #131c31;
@@ -14,7 +99,7 @@
 *,
 *::before,
 *::after {
-  box-sizing: border-box;
+  box-sizing: border-box; /* kendi kafasına göre eklenen boşlukları siler */
 }
 
 
@@ -23,9 +108,9 @@ body {
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   background: var(--color-bg);
   color: var(--color-text);
-  line-height: 1.6;
+  line-height: 1.6; /* satırlar arası boşluğu 1.6 katına çıkarır */
   min-height: 100vh;
-  overflow-y: auto;
+  overflow-y: auto; /* kaydırma çubuğu */
 
 }
 
@@ -41,6 +126,7 @@ body {
 }
 .landing-content {
   max-width: 480px;
+  margin-bottom: 15vh;
   text-align: left;
   padding: 48px;
   margin-left: 5%;
@@ -62,7 +148,7 @@ body {
   display: inline-block;
   padding: 12px 28px;
   border-radius: var(--radius);
-  text-decoration: none;
+  text-decoration: none; /*Linklerin altındaki mavi çizgiyi yok eder*/
   font-weight: 500;
   cursor: pointer;
   border: none;
@@ -110,7 +196,7 @@ input[type="number"] {
 
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
-  -webkit-appearance: none;
+  -webkit-appearance: none; /*aşağı yukarı okları kaldırır */ 
   margin: 0;
 }
 
@@ -122,7 +208,7 @@ input[type="number"]::-webkit-inner-spin-button {
 }
 
 .summary-card {
-  flex: 1;
+  flex: 1  ;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
@@ -138,7 +224,7 @@ input[type="number"]::-webkit-inner-spin-button {
 
 .summary-label {
   display: block;
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   color: var(--color-text-muted);
   margin-top: 4px;
 }
@@ -150,12 +236,12 @@ input[type="number"]::-webkit-inner-spin-button {
   gap: 16px;
 }
 .field-wide {
-  grid-column: 1 / -1;
+  grid-column: 1 / -1; /*Baştan sona uzatmayı sağlar*/
 }
 
 .field {
   display: flex;
-  flex-direction: column;
+  flex-direction: column;  /* label ile input alt alta olur  */
   gap: 4px;
 }
 .landing-hero {
@@ -193,7 +279,7 @@ label {
 
 .car-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: collapse; /* çizgileri iptal eder*/
 }
 
 .car-table th,
@@ -212,15 +298,18 @@ label {
   font-size: 0.85rem;
   color: var(--color-text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.03em; /* harfler arası boşluk */
 }
 
 .badge {
   display: inline-block;
-  padding: 4px 10px;
+  padding: 4px 8px; /*Basma kısmı büyüklüğü  */ 
   border-radius: 999px;
   font-size: 0.9rem;
   font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;  
 }
 
 .badge-catalog {
@@ -241,6 +330,7 @@ label {
 .badge-testDrive {
   background: rgba(234, 179, 8, 0.15);
   color: #fbbf24;
+  
 }
 
 
@@ -323,7 +413,7 @@ label {
     margin-bottom: 24px;
   }
   .car-form {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr; /*Tek sütun*/
   }
   .summary {
     flex-direction: row;
@@ -389,11 +479,14 @@ label {
   }
 
   .car-table tr {
-    margin-bottom: 16px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius);
-    overflow: hidden;
-  }
+  margin-bottom: 24px; /* Kartların arasını biraz daha açtık ki nefes alsınlar */
+  background: var(--color-surface); /* Kartın içi hafif farklı bir tonda olsun */
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6); /* Derin ve karanlık bir gölge */
+  border: 1px solid rgba(16, 13, 178, 0.05); /* Kartın sınırlarını belli eden jilet gibi saydam beyaz çizgi */
+  border-radius: 10px; /* Köşeleri daha modern bir kavise soktuk */
+  overflow: hidden; /* Resimlerin köşelerden taşmasını engelledik */
+  transition: transform 0.2s ease; /* (İsteğe bağlı) Tıklayınca hareket etme hissi için hazırlık */
+}
   .car-table td[data-label="Fotoğraf"] {
     display: block !important;
     padding: 0 !important;

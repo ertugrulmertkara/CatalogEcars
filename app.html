@@ -1,18 +1,39 @@
+<!--bir sayfada id bir kez kullanılır uniquedir js için kullanılır (TC number),
+class ise bir çok kez kullanılır ; bütün butonlar gibi 
+--> 
+<!-- <img>etiketinin kapanışı yoktur : 2 zounlu attribute vardır 1: src="" , 2: alt="" (resim yüklenmeze gösterilecek metindir-->
+ <!-- hyperlinks: <a </a> ile yazılır href ile link koyulur zorunludur, target="_blank" ile yeni bir sekmede açarsın , paginationu sağlar -->
+<!-- div : ekranda boylu boyunca bir satırı kaplar (blok) lendisinden sonra gelen her şeyi alt satıra atar-->
+ <!-- span: satıriçi kutu , div gibidir ama alt satıra atmaaz bir satır kaplamaz akışı bozmaz. -->
+ <!-- 
+ <header>: Sitenin en üst kısmı (Logo ve menü genelde buradadır).
+<nav>: Navigasyon (Menü linkleri) bölümü.
+<main>: Sitenin kalbi, ana içeriği. (Bir sayfada sadece 1 tane <main> olur).
+<section>: Sayfadaki farklı bölümler (Örn: Hakkımızda bölümü, İletişim bölümü).
+<footer>: Sitenin en altı (Telif hakkı, sosyal medya linkleri).
+ -->
+
+
+
+
+
+
+
 <!DOCTYPE html>
 <html lang="tr">
-<head>
+<head> <!-- kısmında kullanıcınjın ekranda göremdiği ama sitenin beyni olan kısımdır. sekme ismi , tasarımı(style.css) , charset UTF-8 gibi -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rehber — CatalogEcars</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="app-page">
+<body class="app-page"> <!-- body kısmı kullanıcının gördüğü her şeydir ,  -->
 
   <header class="topbar">
     <a href="index.html" class="topbar-brand">CatalogEVcars</a>
   </header>
 
-  <div class="container">
+  <div class="container"> 
 
     <section class="summary" aria-label="Özet">
       <div class="summary-card">
