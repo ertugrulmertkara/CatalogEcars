@@ -237,7 +237,20 @@ class ise bir çok kez kullanılır ; bütün butonlar gibi
       <button type="button" id="next-page-btn" class="btn btn-ghost">Sonraki →</button>
     </div>
   </div>
-
-  <script src="js/app.js"></script>
+  <div id="image-modal" class="modal-hidden">
+    <div class="modal-card">
+       <button type="button" id="close-modal" aria-label="Kapat">&times;</button>
+       <img id="modal-image" src="" alt="Büyütülmüş kart resmi">
+       <div class="modal-info">
+         <h2 id="modal-brand">Marka Model</h2>
+         <p id="modal-price">Fiyat</p>
+         <div class="modal-badges">
+         <span id="modal-year">Yıl</span>
+         <span id="modal-range">Menzil</span>
+       </div>
+    </div>
+  </div>
+ </div>
+  <script src="js/app.js"></script> <!-- motoru en sonda bağlıyoruz yoksa aracın iskeleti olmazsa hata verir. -->
 </body>
 </html>

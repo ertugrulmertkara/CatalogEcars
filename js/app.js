@@ -1,7 +1,25 @@
-let cars = [];
+// let , const , var değişken tanımlamak için kullanılır. let ve const ES6 ile gelmiştir. var eski sürümlerde kullanılırdı. let ve const block scope (sadece {} içinde geçerli) iken var function scope (sadece function içinde geçerli) dir.
+// let içindeki değer sonradan değiştirilebilir. const içindeki değer sonradan değiştirilemez. var içindeki değer sonradan değiştirilebilir.
+// `` backtick ile yazılan stringler template literal olarak adlandırılır. ${} ile değişkenler string içine gömülebilir.
+// Sadece + işareti string'leri yapıştırır. Diğer matematik işlemleri string'i zorla Number'a çevirir.
+// false ifadeler: 0, "", null, undefined, NaN
+// equality operators: == (eşit mi), === (tipi ve değeri eşit mi), != (eşit değil mi), !== (tipi ve değeri eşit değil mi) === bunu kullan katıdır. 
+//'use strict'; bu ifade ilk satıra yazılır amacı js'in katı olmasını sağlamaktır. Örn: değişken tanımlamadan kullanılamaz, debugging kolaylaştırır, performansı artırır.
+// function expression: const myFunc = function() { ... } , function declaration: function myFunc() { ... } , neden kullanılır: function declaration hoisting yapar, function expression yapmaz.
+// ARROW FUNCTION Yöntemi => const myFunc = () => { ... } , function expression ile aynı işlevi görür. this bağlamını korur.
+// for (let i = 1; i <= x; i++)
+// const benimButonum = document.querySelector('.btn-primary');class'ı btn-primary olan ilk elementi seçer. querySelectorAll('.btn-primary') class'ı btn-primary olan tüm elementleri seçer ve NodeList döndürür.
+// const popUpKutusu = document.querySelector('#image-modal');id 'si image-modal olan ilk elementi seçer.
+
+let cars = []; // isimlendirme mantığı şudur: ilk harf küçük sonraki her kelimenin ilk harfi büyüktür carPrice , asla sayıyla başlamaz
 let currentPage = 1;
 const itemsPerPage = 10;
 const API_URL = "https://catalogecars.onrender.com/api/cars";
+
+const imageModal = document.querySelector('#image-modal');
+const modalImage = document.querySelector('#modal-image');
+const closeModal = document.querySelector('#close-modal');
+
 
 function getOptimizedImageUrl(url) {
   if (!url || !url.startsWith("http")) return "https://placehold.co/60x40";
@@ -185,6 +203,23 @@ tbody.addEventListener("click",async function (e) {
       console.error("Sunucuya bağlanılamadı:", error);
     }
   }
+  else if (e.target.classList.contains("car-thumb")) {
+    modalImage.src = e.target.src;
+    const satir = e.target.closest("tr");
+    const markaText = satir.querySelector('td[data-label="Araç"]').textContent;
+    const fiyatText = satir.querySelector('td[data-label="Fiyat"]').textContent;
+    const yilText = satir.querySelector('td[data-label="Yıl"]').textContent;
+    const menzilText = satir.querySelector('td[data-label="Menzil"]').textContent;
+
+    document.querySelector('#modal-brand').textContent = markaText;
+    document.querySelector('#modal-price').textContent = fiyatText;
+    document.querySelector('#modal-year').textContent = yilText;
+    document.querySelector('#modal-range').textContent = menzilText;
+
+    imageModal.classList.remove("modal-hidden");
+
+
+  }
 });
 
 function updateStats() {
@@ -219,5 +254,16 @@ document.getElementById("next-page-btn").addEventListener("click", function () {
     currentPage++;
     renderCars();
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+});
+
+
+closeModal.addEventListener('click', function () {
+  imageModal.classList.add('modal-hidden');
+}); 
+
+imageModal.addEventListener("click", function(e) {
+  if (e.target.id === "image-modal") {
+    imageModal.classList.add("modal-hidden");
   }
 });

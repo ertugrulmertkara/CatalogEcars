@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 /* css'de external bağlantı:<link rel="stylesheet" href="css/style.css"> , html de head kısmına yazılır.  */
 /* 
 1: tag seçici
@@ -84,12 +86,12 @@ media (max-width: 768px) {
 
 
 :root {
-  --color-bg: #0b1120;
-  --color-surface: #131c31;
-  --color-border: #24304a;
-  --color-text: #e6ebf5;
-  --color-text-muted: #8b96ab;
-  --color-accent: #3b82f6;
+  --color-bg: #000814;       /* ink-black (En arka zemin) */
+  --color-surface: #001d3d;  /* prussian-blue (Kartlar ve paneller) */
+  --color-border: #003566;   /* regal-navy (Çerçeveler ve çizgiler) */
+  --color-text: #ffffff;     /* Bembeyaz (Lacivertin üstünde çok net okunur) */
+  --color-text-muted: rgba(255, 255, 255, 0.6); /* Hafif soluk beyaz */
+  --color-accent: #ffc300;   /* school-bus-yellow (Butonlar ve vurgular) */
   --color-success: #22c55e;
   --color-danger: #ef4444;
   --radius: 8px;
@@ -105,7 +107,7 @@ media (max-width: 768px) {
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: var(--color-bg);
   color: var(--color-text);
   line-height: 1.6; /* satırlar arası boşluğu 1.6 katına çıkarır */
@@ -156,7 +158,8 @@ body {
 
 .btn-primary {
   background: var(--color-accent);
-  color: #fff;
+  color: #000814; /* Sarı butonun üstünde siyah/koyu lacivert yazı mükemmel durur */
+  font-weight: 700; /* Yazıyı daha belirgin yaptık */
 }
 
 .btn-primary:hover {
@@ -167,15 +170,19 @@ body {
 
 .topbar {
   background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid rgba(255, 195, 0, 0.2);
+  box-shadow: 0 8px 30px rgba(255, 195, 0, 0.1); /* Alta doğru süzülen sarı gölge */
   padding: 14px var(--space);
 }
 
 .topbar-brand {
-  color: var(--color-text);
+  color: var(--color-accent); /* Logo Sarı oldu */
   text-decoration: none;
-  font-weight: 600;
-  font-size: 1.1rem;
+  font-weight: 700;
+  font-size: 1.2rem;
+  letter-spacing: 1px;
+  text-shadow: 0px 4px 15px rgba(255, 196, 0, 0.48); /* Logonun tam altına süzülen neon sarı gölge */
+
 }
 
 .container {
@@ -214,12 +221,20 @@ input[type="number"]::-webkit-inner-spin-button {
   border-radius: var(--radius);
   padding: 16px;
   text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.summary-card:hover {
+  transform: translateY(-5px); /* Üstüne gelince hafif havaya kalkar */
+  box-shadow: 0 12px 25px rgba(255, 195, 0, 0.15); /* Alttan vuran sarı gölge */
+  border-color: rgba(255, 195, 0, 0.4);
 }
 
 .summary-value {
   display: block;
   font-size: 1.8rem;
-  font-weight: 600;
+  font-weight: 700;
+  color: var(--color-accent); /* İstatistik rakamları sarı oldu */
 }
 
 .summary-label {
@@ -261,6 +276,15 @@ textarea {
   color: var(--color-text);
   font-size: 0.95rem;
   font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+select:focus,
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px rgba(255, 195, 0, 0.2); /* Sarı Glow efekti */
 }
 label {
   font-size: 0.85rem;
@@ -280,6 +304,14 @@ label {
 .car-table {
   width: 100%;
   border-collapse: collapse; /* çizgileri iptal eder*/
+}
+
+.car-table tbody tr {
+  transition: all 0.2s ease;
+}
+
+.car-table tbody tr:hover {
+  box-shadow: 0 30px 65px rgba(255, 196, 0, 0.344); /* Sadece gölge kalacak, arka plan bozulmayacak */
 }
 
 .car-table th,
@@ -347,6 +379,7 @@ label {
   height: 60px;
   object-fit: cover;
   border-radius: 6px;
+  cursor: pointer;
 }
 
 
@@ -388,6 +421,88 @@ label {
   border-radius: var(--radius);
   padding: var(--space);
 }
+
+#image-modal{
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.8);
+  z-index:9999;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.modal-hidden{
+  display:none;
+}
+
+.modal-card {
+  background-color: var(--color-surface);
+  border-radius: 12px;
+  overflow: hidden;
+  width: 90%;
+  max-width: 450px;
+  position: relative;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+  animation: modalAyar 0.3s ease-out;
+
+}
+
+@keyframes modalAyar {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+#modal-image {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+}
+.modal-info {
+  padding: 24px;
+  text-align: center;
+}
+
+#modal-brand {
+  font-size: 22px;
+  margin-bottom: 8px;
+  color: var(--color-text);
+}
+#modal-price {
+  font-size: 20px;
+  font-weight: bold;
+  color: var(--color-accent); /* Mavi vurgu rengin */
+  margin-bottom: 16px;
+}
+.modal-badges span {
+  background: var(--color-bg);
+  padding: 6px 14px;
+  border-radius: 20px;
+  margin: 0 5px;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+#close-modal {
+  position: absolute;
+  top: 15px; right: 15px;
+  font-size: 32px;
+  color: white;
+  background: rgba(0,0,0,0.5);
+  border: none;
+  border-radius: 50%;
+  width: 40px; height: 40px;
+  display: flex; justify-content: center; align-items: center;
+  cursor: pointer;
+  line-height: 1;
+}
+#close-modal:hover {
+  background: var(--color-danger);
+}
+.modal-hidden {
+  display: none !important;
+}
+
+
 
 
 @media (max-width: 768px) {
