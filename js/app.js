@@ -16,22 +16,38 @@ let currentPage = 1;
 const itemsPerPage = 10;
 const API_URL = "https://catalogecars.onrender.com/api/cars";
 
-const imageModal = document.querySelector('#image-modal');
-const modalImage = document.querySelector('#modal-image');
-const closeModal = document.querySelector('#close-modal');
+// --- DOM ELEMENTS (HTML Bağlantıları) ---
+const UI = {
+  imageModal: document.querySelector('#image-modal'),
+  modalImage: document.querySelector('#modal-image'),
+  closeModal: document.querySelector('#close-modal'),
+  toggleBtn: document.getElementById("toggle-form-btn"),
+  formPanel: document.getElementById("add-car-panel"),
+  filterBody: document.getElementById("filter-body"),
+  filterStatus: document.getElementById("filter-status"),
+  sortBy: document.getElementById("sort-by"),
+  carForm: document.getElementById("car-form"),
+  tbody: document.getElementById("car-tbody"),
+  pageInfo: document.getElementById("page-info"),
+  prevPageBtn: document.getElementById("prev-page-btn"),
+  nextPageBtn: document.getElementById("next-page-btn"),
+  statTotal: document.getElementById("stat-total"),
+  statShortlist: document.getElementById("stat-shortlist"),
+  statRejected: document.getElementById("stat-rejected")
+};
 
-
-function getOptimizedImageUrl(url) {
-  if (!url || !url.startsWith("http")) return "https://placehold.co/60x40";
-  return url;
-}
+const statusLabels = {
+  catalog: "Katalog",
+  shortlist: "Kısa liste",
+  testDrive: "Test sürüşü",
+  rejected: "Elendi",
+};
 
 async function fetchCars(){
-
   try{
-    const body = filterBody.value;
-    const status = filterStatus.value;
-    const sort = sortBy.value;
+    const body = UI.filterBody.value;
+    const status = UI.filterStatus.value;
+    const sort = UI.sortBy.value;
     const queryUrl = `${API_URL}?bodyType=${body}&status=${status}&sort=${sort}`;
     const response = await fetch(queryUrl); // responselar her zaman düz metindir 
     cars = await response.json();
@@ -43,29 +59,18 @@ async function fetchCars(){
   }
 }
 
-
-const toggleBtn = document.getElementById("toggle-form-btn");
-const formPanel = document.getElementById("add-car-panel");
-const filterBody = document.getElementById("filter-body");
-const filterStatus = document.getElementById("filter-status");
-const sortBy = document.getElementById("sort-by");
-
-
-toggleBtn.addEventListener("click", function () {
-  formPanel.hidden = !formPanel.hidden;
-   if (formPanel.hidden) {
-    toggleBtn.textContent = "+ Araç ekle";
+UI.toggleBtn.addEventListener("click", function () {
+  UI.formPanel.hidden = !UI.formPanel.hidden;
+   if (UI.formPanel.hidden) {
+    UI.toggleBtn.textContent = "+ Araç ekle";
   } else {
-    toggleBtn.textContent = "✕ Kapat";
+    UI.toggleBtn.textContent = "✕ Kapat";
   }
 });
 
-
-
-const carForm = document.getElementById("car-form");
-carForm.addEventListener("submit",async function (e) { // içine await yazıyorsak async functiondur
+UI.carForm.addEventListener("submit",async function (e) { // içine await yazıyorsak async functiondur
   e.preventDefault();
-
+  
   const newCar = {
     brand: document.getElementById("brand").value,
     model: document.getElementById("model").value,
@@ -81,104 +86,115 @@ carForm.addEventListener("submit",async function (e) { // içine await yazıyors
     note: document.getElementById("note").value,
   
   };
-  try{
-    const response = await fetch(API_URL , { //git isteği getir(fetch) , (await) sakın boş gelme bekle
-      method: "POST" , //veriyi yaz
-      headers: {
-        "Content-Type": "application/json" // içindeki veri json 
-      },
-      body: JSON.stringify(newCar) // obje taşıyamaz bu yüzden stringify ile metin kutusuna çeviriyoruz.
-    });
-    if(response.ok){
-      fetchCars();
-      carForm.reset();
-      formPanel.hidden = true;
-      toggleBtn.textContent = "+ Araç ekle";
-    }
-    else{
-      console.error("Araç eklenirken bir hata oluştu.")
-
-    }
-    }
-
-    catch (error){
-        console.error("Sunucuya bağlanılamadı" , error);
-    }
+  addCar(newCar);
 });
 
-
-
-const tbody = document.getElementById("car-tbody");
-const statusLabels = {
-  catalog: "Katalog",
-  shortlist: "Kısa liste",
-  testDrive: "Test sürüşü",
-  rejected: "Elendi",
-};
-
 function renderCars() {
-     tbody.innerHTML = "";
+   UI.tbody.innerHTML = "";
+  const totalPages = Math.ceil(cars.length / itemsPerPage);
+  // 1. Boş Liste Durumu
   if (cars.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Henüz araç eklenmedi.</td></tr>';
-    document.getElementById("page-info").textContent = "Sayfa 0 / 0";
-    document.getElementById("prev-page-btn").disabled = true;
-    document.getElementById("next-page-btn").disabled = true;
+    UI.tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Henüz araç eklenmedi.</td></tr>';
+    updatePaginationUI(0); // İşi uzmana devrettik!
     return;
   }
-  // --- Sayfalama Matematigi ---
-  const totalPages = Math.ceil(cars.length / itemsPerPage);
-  if (currentPage > totalPages) currentPage = totalPages;
-  if (currentPage < 1) currentPage = 1;
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentCars = cars.slice(startIndex, endIndex); 
-  // Tabloya sadece o 10 arabayı çiziyoruz
+  const currentCars = getPaginatedCars(totalPages);
+  // 3. Ekrana Çizme
   currentCars.forEach(function (car) {
     const tr = document.createElement("tr");
     if (car.status === "rejected") {
       tr.classList.add("is-rejected");
     }
-    const fallbackUrl = "https://ui-avatars.com/api/?name=" + encodeURIComponent(car.brand) + "&background=random&size=100";
-    tr.innerHTML =
-      '<td data-label="Fotoğraf"><img src="' + getOptimizedImageUrl(car.imageUrl) + '" alt="' + car.brand + '" class="car-thumb" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src=\'' + fallbackUrl + '\'"></td>' +
-      '<td data-label="Araç"><strong>' + car.brand + "</strong> " + car.model + (car.note ? '<span class="row-note">' + car.note + "</span>" : "") + "</td>" +
-      '<td data-label="Yıl">' + car.year + "</td>" +
-      '<td data-label="Kasa">' + car.bodyType + "</td>" +
-      '<td data-label="Menzil">' + car.range + " km</td>" +
-      '<td data-label="Fiyat">' + car.price.toLocaleString("tr-TR") + " TL</td>" +
-      '<td data-label="Durum"><span class="badge badge-' + car.status + '">' + statusLabels[car.status] + "</span></td>" + 
-      '<td class="row-actions"><button type="button" class="btn-icon" data-id="' + car._id + '">Sil</button></td>';
-    tbody.appendChild(tr);
+    tr.innerHTML = generateRowHtml(car);
+    UI.tbody.appendChild(tr);
   });
-  // Butonları ve sayfa yazısını güncelle
-  document.getElementById("page-info").textContent = "Sayfa " + currentPage + " / " + totalPages;
-  document.getElementById("prev-page-btn").disabled = (currentPage === 1);
-  document.getElementById("next-page-btn").disabled = (currentPage === totalPages);
-  updateStats();
+  // 4. Alt Kısım Güncellemeleri
+  updatePaginationUI(totalPages); // İşi uzmana devrettik!
+  updateStats()
   }
 
 
-tbody.addEventListener("click",async function (e) {
+UI.tbody.addEventListener("click",async function (e) {
    if (e.target.classList.contains("btn-icon")) {
     const id = e.target.dataset.id;
+    deleteCar(id);
     
-    try {
-      // 1. Backend'e "Bu id'li aracı sil" isteği atıyoruz
-      const response = await fetch(API_URL + "/" + id, {
-        method: "DELETE"
-      });
-      // 2. Silme başarılıysa tabloyu güncelle
-      if (response.ok) {
-        fetchCars(); 
-      } else {
-        console.error("Araç silinirken hata oluştu.");
-      }
-    } catch (error) {
-      console.error("Sunucuya bağlanılamadı:", error);
-    }
   }
      else if (e.target.classList.contains("badge")) {
     const id = e.target.closest("tr").querySelector(".btn-icon").dataset.id;
+    UpdateCarStatus(id);
+  }
+
+  else if (e.target.classList.contains("car-thumb")) {
+    openMobileCard(e.target);
+  }
+});
+
+function updateStats() {
+  UI.statTotal.textContent = cars.length;
+
+  UI.statShortlist.textContent = cars.filter(function (car) {
+    return car.status === "shortlist";
+  }).length;
+
+  UI.statRejected.textContent = cars.filter(function (car) {
+    return car.status === "rejected";
+  }).length;
+}
+
+UI.filterBody.addEventListener("change", fetchCars);
+UI.filterStatus.addEventListener("change", fetchCars);
+UI.sortBy.addEventListener("change", fetchCars);
+fetchCars();
+
+// --- Sayfalama Buton Dinleyicileri ---
+UI.prevPageBtn.addEventListener("click", function () {
+  if (currentPage > 1) {
+    currentPage--;
+    renderCars();
+    window.scrollTo({ top: 0, behavior: "smooth" }); // Sayfanın en tepesine yumuşakça kaydır
+  }
+});
+
+UI.nextPageBtn.addEventListener("click", function () {
+  const totalPages = Math.ceil(cars.length / itemsPerPage);
+  if (currentPage < totalPages) {
+    currentPage++;
+    renderCars();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+});
+
+
+UI.closeModal.addEventListener('click', function () {
+  UI.imageModal.classList.add('modal-hidden');
+}); 
+
+UI.imageModal.addEventListener("click", function(e) {
+  if (e.target.id === "image-modal") {
+    UI.imageModal.classList.add("modal-hidden");
+  }
+});
+// FUNCTIONS // 
+ function openMobileCard(imageTarget){
+    UI.modalImage.src = imageTarget.src; // Hatayi burada duzelttik
+    const satir = imageTarget.closest("tr");
+    const markaText = satir.querySelector('td[data-label="Araç"]').textContent;
+    const fiyatText = satir.querySelector('td[data-label="Fiyat"]').textContent;
+    const yilText = satir.querySelector('td[data-label="Yıl"]').textContent;
+    const menzilText = satir.querySelector('td[data-label="Menzil"]').textContent;
+
+    document.querySelector('#modal-brand').textContent = markaText;
+    document.querySelector('#modal-price').textContent = fiyatText;
+    document.querySelector('#modal-year').textContent = yilText;
+    document.querySelector('#modal-range').textContent = menzilText;
+
+    UI.imageModal.classList.remove("modal-hidden");
+
+
+  }
+    async function UpdateCarStatus(id) {  
+  
     const statusOrder = ["catalog", "shortlist", "testDrive", "rejected"];
     const car = cars.find(function (c) {
       return c._id === id;
@@ -203,67 +219,80 @@ tbody.addEventListener("click",async function (e) {
       console.error("Sunucuya bağlanılamadı:", error);
     }
   }
-  else if (e.target.classList.contains("car-thumb")) {
-    modalImage.src = e.target.src;
-    const satir = e.target.closest("tr");
-    const markaText = satir.querySelector('td[data-label="Araç"]').textContent;
-    const fiyatText = satir.querySelector('td[data-label="Fiyat"]').textContent;
-    const yilText = satir.querySelector('td[data-label="Yıl"]').textContent;
-    const menzilText = satir.querySelector('td[data-label="Menzil"]').textContent;
 
-    document.querySelector('#modal-brand').textContent = markaText;
-    document.querySelector('#modal-price').textContent = fiyatText;
-    document.querySelector('#modal-year').textContent = yilText;
-    document.querySelector('#modal-range').textContent = menzilText;
-
-    imageModal.classList.remove("modal-hidden");
-
-
+  async function deleteCar(id) {
+    try {
+      // 1. Backend'e "Bu id'li aracı sil" isteği atıyoruz
+      const response = await fetch(API_URL + "/" + id, {
+        method: "DELETE"
+      });
+      // 2. Silme başarılıysa tabloyu güncelle
+      if (response.ok) {
+        fetchCars(); 
+      } else {
+        console.error("Araç silinirken hata oluştu.");
+      }
+    } catch (error) {
+      console.error("Sunucuya bağlanılamadı:", error);
+    }
   }
-});
 
-function updateStats() {
-  document.getElementById("stat-total").textContent = cars.length;
-
-  document.getElementById("stat-shortlist").textContent = cars.filter(function (car) {
-    return car.status === "shortlist";
-  }).length;
-
-  document.getElementById("stat-rejected").textContent = cars.filter(function (car) {
-    return car.status === "rejected";
-  }).length;
+  async function addCar(newCar) {
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newCar)
+    });
+    
+    if (response.ok) {
+      fetchCars(); // Başarılıysa tabloyu güncelle
+      UI.carForm.reset(); // Formu temizle
+      UI.formPanel.hidden = true; // Paneli gizle
+      UI.toggleBtn.textContent = "+ Araç ekle"; // Buton yazısını düzelt
+    } else {
+      console.error("Araç eklenirken bir hata oluştu.");
+    }
+  } catch (error) {
+    console.error("Sunucuya bağlanılamadı", error);
+  }
 }
 
-filterBody.addEventListener("change", fetchCars);
-filterStatus.addEventListener("change", fetchCars);
-sortBy.addEventListener("change", fetchCars);
-fetchCars();
+function generateRowHtml(car){
+  const fallbackUrl = "https://ui-avatars.com/api/?name=" + encodeURIComponent(car.brand) + "&background=random&size=100";
 
-// --- Sayfalama Buton Dinleyicileri ---
-document.getElementById("prev-page-btn").addEventListener("click", function () {
-  if (currentPage > 1) {
-    currentPage--;
-    renderCars();
-    window.scrollTo({ top: 0, behavior: "smooth" }); // Sayfanın en tepesine yumuşakça kaydır
-  }
-});
+   return `
+    <td data-label="Fotoğraf"><img src="${getOptimizedImageUrl(car.imageUrl)}" alt="${car.brand}" class="car-thumb" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='${fallbackUrl}'"></td>
+    <td data-label="Araç"><strong>${car.brand}</strong> ${car.model} ${car.note ? '<span class="row-note">' + car.note + '</span>' : ''}</td>
+    <td data-label="Yıl">${car.year}</td>
+    <td data-label="Kasa">${car.bodyType}</td>
+    <td data-label="Menzil">${car.range} km</td>
+    <td data-label="Fiyat">${car.price.toLocaleString("tr-TR")} TL</td>
+    <td data-label="Durum"><span class="badge badge-${car.status}">${statusLabels[car.status]}</span></td>
+    <td class="row-actions"><button type="button" class="btn-icon" data-id="${car._id}">Sil</button></td>
+  `;
 
-document.getElementById("next-page-btn").addEventListener("click", function () {
-  const totalPages = Math.ceil(cars.length / itemsPerPage);
-  if (currentPage < totalPages) {
-    currentPage++;
-    renderCars();
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-});
+}
+function getOptimizedImageUrl(url) {
+  if (!url || !url.startsWith("http")) return "https://placehold.co/60x40";
+  return url;
+}
 
+function updatePaginationUI(totalPages) {
+  // Eğer hiç araba yoksa (totalPages 0 ise) ekranda Sayfa 0/0 yerine 1/1 yazsın
+  const displayTotal = totalPages === 0 ? 1 : totalPages;
+  
+  UI.pageInfo.textContent = "Sayfa " + currentPage + " / " + displayTotal;
+  UI.prevPageBtn.disabled = (currentPage === 1);
+  UI.nextPageBtn.disabled = (currentPage === displayTotal || displayTotal === 0);
+}
 
-closeModal.addEventListener('click', function () {
-  imageModal.classList.add('modal-hidden');
-}); 
-
-imageModal.addEventListener("click", function(e) {
-  if (e.target.id === "image-modal") {
-    imageModal.classList.add("modal-hidden");
-  }
-});
+function getPaginatedCars(totalPages) {
+  if (currentPage > totalPages) currentPage = totalPages;
+  if (currentPage < 1) currentPage = 1;
+  
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  
+  return cars.slice(startIndex, endIndex); // Sadece o sayfaya ait arabaları kes ve yolla
+}
