@@ -176,8 +176,18 @@ class ise bir çok kez kullanılır ; bütün butonlar gibi
         </div>
       </form>
     </section>
+    <button
+  type="button"
+  id="toggle-filters-btn"
+  class="btn btn-primary"
+  aria-expanded="false"
+  aria-controls="filters-panel"
+>
+  Filtrele
+</button>
+    
+    <section class="filters" aria-label="Filtreler" id="filters-panel" hidden>
 
-    <section class="filters" aria-label="Filtreler">
       <div class="field field-sm">
         <label for="filter-body">Kasa</label>
       <select id="filter-body">
@@ -189,6 +199,41 @@ class ise bir çok kez kullanılır ; bütün butonlar gibi
         <option value="Station">Station</option>
       </select>
       </div>
+      <div class="field field-sm">
+  <label for="filter-brand">Marka</label>
+  <select id="filter-brand">
+    <option value="all">Hepsi</option>
+    <option value="Tesla">Tesla</option>
+    <option value="BYD">BYD</option>
+    <option value="Togg">Togg</option>
+    <option value="Volkswagen">Volkswagen</option>
+    <option value="Hyundai">Hyundai</option>
+    <option value="Kia">Kia</option>
+    <option value="Renault">Renault</option>
+    <option value="Peugeot">Peugeot</option>
+    <option value="Fiat">Fiat</option>
+    <option value="MG">MG</option>
+    <option value="Audi">Audi</option>
+    <option value="BMW">BMW</option>
+    <option value="Mercedes-Benz">Mercedes-Benz</option>
+    <option value="Volvo">Volvo</option>
+    <option value="Skoda">Skoda</option>
+    <option value="Cupra">Cupra</option>
+    <option value="Opel">Opel</option>
+    <option value="Citroën">Citroën</option>
+    <option value="Nissan">Nissan</option>
+    <option value="Ford">Ford</option>
+  </select>
+</div>
+      <div class="field field-sm">
+  <label for="filter-drivetrain">Çekiş</label>
+  <select id="filter-drivetrain">
+    <option value="all">Hepsi</option>
+    <option value="FWD">Önden çekiş (FWD)</option>
+    <option value="RWD">Arkadan itiş (RWD)</option>
+    <option value="AWD">Dört çeker (AWD)</option>
+  </select>
+</div>
 
       <div class="field field-sm">
         <label for="filter-status">Durum</label>
@@ -200,8 +245,55 @@ class ise bir çok kez kullanılır ; bütün butonlar gibi
           <option value="rejected">Elendi</option>
         </select>
       </div>
-
       <div class="field field-sm">
+  <label for="filter-min-price">Minimum fiyat</label>
+  <input
+    type="number"
+    id="filter-min-price"
+    min="0"
+    step="1000"
+    placeholder="Örn. 1000000"
+  >
+</div>
+
+<div class="field field-sm">
+  <label for="filter-max-price">Maksimum fiyat</label>
+  <input
+    type="number"
+    id="filter-max-price"
+    min="0"
+    step="1000"
+    placeholder="Örn. 5000000"
+  >
+</div>
+
+<div class="field field-sm">
+  <label for="filter-min-range">Minimum menzil</label>
+  <input
+    type="number"
+    id="filter-min-range"
+    min="0"
+    step="1"
+    placeholder="Örn. 300"
+  >
+  <span class="unit">km</span>
+</div>
+
+<div class="field field-sm">
+  <label for="filter-max-range">Maksimum menzil</label>
+  <input
+    type="number"
+    id="filter-max-range"
+    min="0"
+    step="1"
+    placeholder="Örn. 600"
+  >
+  <span class="unit">km</span>
+</div>
+
+    </section>
+    
+    <div class="field field-sm">
         <label for="sort-by">Sırala</label>
         <select id="sort-by">
          <option value="createdAt-desc">Eklenme: Yeni → Eski</option>
@@ -216,7 +308,6 @@ class ise bir çok kez kullanılır ; bütün butonlar gibi
           
         </select>
       </div>
-    </section>
 
     <main class="car-list">
       <table class="car-table">

@@ -44,20 +44,41 @@ const UI = {
   nextPageBtn: document.getElementById("next-page-btn"),
   statTotal: document.getElementById("stat-total"),
   statShortlist: document.getElementById("stat-shortlist"),
-  statRejected: document.getElementById("stat-rejected")
+  statRejected: document.getElementById("stat-rejected"),
+  filterBrand: document.getElementById("filter-brand"),
+  toggleFiltersBtn: document.getElementById("toggle-filters-btn"),
+  filtersPanel: document.getElementById("filters-panel"),
+  filterDrivetrain: document.getElementById("filter-drivetrain"),
+  filterMinPrice: document.getElementById("filter-min-price"),
+  filterMaxPrice: document.getElementById("filter-max-price"),
+  filterMinRange: document.getElementById("filter-min-range"),
+  filterMaxRange: document.getElementById("filter-max-range"),
+  
 };
 
 async function fetchCars(){
   try{
+    const brand = UI.filterBrand.value;
     const body = UI.filterBody.value;
     const status = UI.filterStatus.value;
+    const drivetrain = UI.filterDrivetrain.value;
     const sortValue = UI.sortBy.value;
+    const minPrice = UI.filterMinPrice.value;
+    const maxPrice = UI.filterMaxPrice.value;
+    const minRange = UI.filterMinRange.value;
+    const maxRange = UI.filterMaxRange.value;
     const [sort, order] = sortValue.split("-");
     const params = new URLSearchParams({
+  brand: brand,
   bodyType: body,
   status: status,
   sort: sort,
-  order: order
+  order: order,
+  minPrice: minPrice,
+  maxPrice: maxPrice,
+  minRange: minRange,
+  maxRange: maxRange,
+  drivetrain: drivetrain
 });
 
     const queryUrl = `${CONFIG.API_URL}?${params.toString()}`;
@@ -154,8 +175,28 @@ function updateStats() {
   }).length;
 }
 
+UI.toggleFiltersBtn.addEventListener("click", function () {
+  const isHidden = UI.filtersPanel.hidden;
+
+  UI.filtersPanel.hidden = !isHidden;
+
+  UI.toggleFiltersBtn.setAttribute(
+    "aria-expanded",
+    String(isHidden)
+  );
+
+  UI.toggleFiltersBtn.textContent = isHidden
+    ? "Filtreleri gizle"
+    : "Filtrele";
+});
+UI.filterMinPrice.addEventListener("change", fetchCars);
+UI.filterMaxPrice.addEventListener("change", fetchCars);
+UI.filterMinRange.addEventListener("change", fetchCars);
+UI.filterMaxRange.addEventListener("change", fetchCars);
+UI.filterBrand.addEventListener("change", fetchCars);
 UI.filterBody.addEventListener("change", fetchCars);
 UI.filterStatus.addEventListener("change", fetchCars);
+UI.filterDrivetrain.addEventListener("change", fetchCars);
 UI.sortBy.addEventListener("change", fetchCars);
 fetchCars();
 
