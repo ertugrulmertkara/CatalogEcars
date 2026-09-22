@@ -785,3 +785,33 @@ label {
   opacity: 1;
   visibility: visible;
 }
+
+/* --- SIRALAMA KUTUSU (SORT SELECT) --- */
+.sort-select {
+  appearance: none;
+  background-color: var(--prussian-blue, #001d3d);
+  color: #ffffff;
+  border: 1px solid var(--regal-navy, #003566);
+  border-radius: 8px;
+  padding: 10px 35px 10px 15px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  height: 100%;
+  outline: none;
+  transition: all 0.2s ease;
+  background-image: url('data:image/svg+xml;utf8,<svg fill="%23ffc300" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+}
+
+.sort-select:hover, .sort-select:focus {
+  border-color: var(--color-accent, #ffc300);
+  box-shadow: 0 0 8px rgba(255, 195, 0, 0.3);
+}
+
+.sort-select option {
+  background-color: var(--ink-black, #000814);
+  color: #fff;
+}
