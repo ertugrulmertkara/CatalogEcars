@@ -21,12 +21,40 @@ app.listen(PORT, function(){
 
 app.get("/api/cars", async function(req, res)
   {
-  const {bodyType , status , sort, order} = req.query;
+  const {bodyType , status , sort, order , brand , drivetrain, minPrice, maxPrice , minRange, maxRange} = req.query;
 
   const filter= {};
   if(bodyType && bodyType !== "all") filter.bodyType = bodyType;
   if(status && status !== "all") filter.status = status;
+  if(brand && brand !== "all") filter.brand = brand;
+  if(drivetrain && drivetrain !== "all") filter.drivetrain = drivetrain;
+  const priceFilter = {};
 
+  if (minPrice !== undefined && minPrice !== "") {
+    priceFilter.$gte = Number(minPrice);
+  }
+
+  if (maxPrice !== undefined && maxPrice !== "") {
+    priceFilter.$lte = Number(maxPrice);
+  }
+
+  if (Object.keys(priceFilter).length > 0) {
+    filter.price = priceFilter;
+  }
+
+  const rangeFilter = {};
+
+  if (minRange !== undefined && minRange !== "") {
+    rangeFilter.$gte = Number(minRange);
+  }
+
+  if (maxRange !== undefined && maxRange !== "") {
+    rangeFilter.$lte = Number(maxRange);
+  }
+
+  if (Object.keys(rangeFilter).length > 0) {
+    filter.range = rangeFilter;
+  }
   const allowedSortFields = ["createdAt", "price", "range"];
   const sortField = allowedSortFields.includes(sort)
   ? sort
