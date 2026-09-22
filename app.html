@@ -176,145 +176,149 @@ class ise bir çok kez kullanılır ; bütün butonlar gibi
         </div>
       </form>
     </section>
-    <button
-  type="button"
-  id="toggle-filters-btn"
-  class="btn btn-primary"
-  aria-expanded="false"
-  aria-controls="filters-panel"
->
-  Filtrele
-</button>
-    
-    <section class="filters" aria-label="Filtreler" id="filters-panel" hidden>
+    <div class="controls-bar">
+      <button
+        type="button"
+        id="toggle-filters-btn"
+        class="btn btn-primary"
+        aria-expanded="false"
+        aria-controls="filters-panel"
+      >
+        <span class="icon">🔍</span> Filtrele
+      </button>
 
-      <div class="field field-sm">
-        <label for="filter-body">Kasa</label>
-      <select id="filter-body">
-        <option value="all">Hepsi</option>
-        <option value="Hatchback">Hatchback</option>
-        <option value="Sedan">Sedan</option>
-        <option value="SUV">SUV</option>
-        <option value="Crossover">Crossover</option>
-        <option value="Station Wagon">Station Wagon</option>
-      </select>
-      </div>
-      <div class="field field-sm">
-  <label for="filter-brand">Marka</label>
-  <select id="filter-brand">
-    <option value="all">Hepsi</option>
-    <option value="Tesla">Tesla</option>
-    <option value="BYD">BYD</option>
-    <option value="Togg">Togg</option>
-    <option value="Volkswagen">Volkswagen</option>
-    <option value="Hyundai">Hyundai</option>
-    <option value="Kia">Kia</option>
-    <option value="Renault">Renault</option>
-    <option value="Peugeot">Peugeot</option>
-    <option value="Fiat">Fiat</option>
-    <option value="MG">MG</option>
-    <option value="Audi">Audi</option>
-    <option value="BMW">BMW</option>
-    <option value="Mercedes-Benz">Mercedes-Benz</option>
-    <option value="Volvo">Volvo</option>
-    <option value="Skoda">Skoda</option>
-    <option value="Cupra">Cupra</option>
-    <option value="Opel">Opel</option>
-    <option value="Citroën">Citroën</option>
-    <option value="Nissan">Nissan</option>
-    <option value="Ford">Ford</option>
-  </select>
-</div>
-      <div class="field field-sm">
-  <label for="filter-drivetrain">Çekiş</label>
-  <select id="filter-drivetrain">
-    <option value="all">Hepsi</option>
-    <option value="FWD">Önden çekiş (FWD)</option>
-    <option value="RWD">Arkadan itiş (RWD)</option>
-    <option value="AWD">Dört çeker (AWD)</option>
-  </select>
-</div>
-
-      <div class="field field-sm">
-        <label for="filter-status">Durum</label>
-        <select id="filter-status">
-          <option value="all">Hepsi</option>
-          <option value="catalog">Katalog</option>
-          <option value="shortlist">Kısa liste</option>
-          <option value="testDrive">Test sürüşü</option>
-          <option value="rejected">Elendi</option>
+      <div class="sort-box">
+        <select id="sort-by" class="btn btn-primary" style="padding-right: 30px;">
+         <option value="createdAt-desc">Sırala: Yeni → Eski</option>
+         <option value="createdAt-asc">Sırala: Eski → Yeni</option>
+         <option value="price-asc">Fiyat: Düşük → Yüksek</option>
+         <option value="price-desc">Fiyat: Yüksek → Düşük</option>
+         <option value="range-desc">Menzil: Yüksek → Düşük</option>
+         <option value="range-asc">Menzil: Düşük → Yüksek</option>
         </select>
       </div>
-      <div class="field field-sm">
-  <label for="filter-min-price">Minimum fiyat</label>
-  <input
-    type="number"
-    id="filter-min-price"
-    min="0"
-    step="1000"
-    placeholder="Örn. 1000000"
-  >
-</div>
+    </div>
+    
+    <!-- Arka planı karartan perde (Overlay) -->
+    <div id="drawer-overlay" class="drawer-overlay"></div>
+    
+    <aside class="side-drawer" aria-label="Filtreler" id="filters-panel">
+      <div class="drawer-header">
+        <h2>Filtreler</h2>
+        <button id="close-drawer-btn" class="btn-icon" aria-label="Kapat">&times;</button>
+      </div>
+      
+      <div class="drawer-content">
+        <div class="field field-sm">
+          <label for="filter-body">Kasa</label>
+        <select id="filter-body">
+          <option value="all">Hepsi</option>
+          <option value="Hatchback">Hatchback</option>
+          <option value="Sedan">Sedan</option>
+          <option value="SUV">SUV</option>
+          <option value="Crossover">Crossover</option>
+          <option value="Station Wagon">Station Wagon</option>
+        </select>
+        </div>
+        <div class="field field-sm">
+    <label for="filter-brand">Marka</label>
+    <select id="filter-brand">
+      <option value="all">Hepsi</option>
+      <option value="Tesla">Tesla</option>
+      <option value="BYD">BYD</option>
+      <option value="Togg">Togg</option>
+      <option value="Volkswagen">Volkswagen</option>
+      <option value="Hyundai">Hyundai</option>
+      <option value="Kia">Kia</option>
+      <option value="Renault">Renault</option>
+      <option value="Peugeot">Peugeot</option>
+      <option value="Fiat">Fiat</option>
+      <option value="MG">MG</option>
+      <option value="Audi">Audi</option>
+      <option value="BMW">BMW</option>
+      <option value="Mercedes-Benz">Mercedes-Benz</option>
+      <option value="Volvo">Volvo</option>
+      <option value="Skoda">Skoda</option>
+      <option value="Cupra">Cupra</option>
+      <option value="Opel">Opel</option>
+      <option value="Citroën">Citroën</option>
+      <option value="Nissan">Nissan</option>
+      <option value="Ford">Ford</option>
+    </select>
+  </div>
+        <div class="field field-sm">
+    <label for="filter-drivetrain">Çekiş</label>
+    <select id="filter-drivetrain">
+      <option value="all">Hepsi</option>
+      <option value="FWD">Önden çekiş (FWD)</option>
+      <option value="RWD">Arkadan itiş (RWD)</option>
+      <option value="AWD">Dört çeker (AWD)</option>
+    </select>
+  </div>
 
-<div class="field field-sm">
-  <label for="filter-max-price">Maksimum fiyat</label>
-  <input
-    type="number"
-    id="filter-max-price"
-    min="0"
-    step="1000"
-    placeholder="Örn. 5000000"
-  >
-</div>
+        <div class="field field-sm">
+          <label for="filter-status">Durum</label>
+          <select id="filter-status">
+            <option value="all">Hepsi</option>
+            <option value="catalog">Katalog</option>
+            <option value="shortlist">Kısa liste</option>
+            <option value="testDrive">Test sürüşü</option>
+            <option value="rejected">Elendi</option>
+          </select>
+        </div>
+        <div class="field field-sm">
+    <label for="filter-min-price">Minimum fiyat</label>
+    <input
+      type="number"
+      id="filter-min-price"
+      min="0"
+      step="1000"
+      placeholder="Örn. 1000000"
+    >
+  </div>
 
-<div class="field field-sm">
-  <label for="filter-min-range">Minimum menzil</label>
-  <input
-    type="number"
-    id="filter-min-range"
-    min="0"
-    step="1"
-    placeholder="Örn. 300"
-  >
-  <span class="unit">km</span>
-</div>
+  <div class="field field-sm">
+    <label for="filter-max-price">Maksimum fiyat</label>
+    <input
+      type="number"
+      id="filter-max-price"
+      min="0"
+      step="1000"
+      placeholder="Örn. 5000000"
+    >
+  </div>
 
-<div class="field field-sm">
-  <label for="filter-max-range">Maksimum menzil</label>
-  <input
-    type="number"
-    id="filter-max-range"
-    min="0"
-    step="1"
-    placeholder="Örn. 600"
-  >
-  <span class="unit">km</span>
-</div>
+  <div class="field field-sm">
+    <label for="filter-min-range">Minimum menzil</label>
+    <input
+      type="number"
+      id="filter-min-range"
+      min="0"
+      step="1"
+      placeholder="Örn. 300"
+    >
+    <span class="unit">km</span>
+  </div>
 
-      <div class="filter-actions">
-        <button type="button" id="apply-filters-btn" class="btn btn-primary">
+  <div class="field field-sm">
+    <label for="filter-max-range">Maksimum menzil</label>
+    <input
+      type="number"
+      id="filter-max-range"
+      min="0"
+      step="1"
+      placeholder="Örn. 600"
+    >
+    <span class="unit">km</span>
+  </div>
+      </div>
+
+      <div class="drawer-footer">
+        <button type="button" id="apply-filters-btn" class="btn btn-primary btn-block">
           Tamam
         </button>
       </div>
-
-     
-    </section>
-
-     <div class="field field-sm">
-        <label for="sort-by">Sırala</label>
-        <select id="sort-by">
-         <option value="createdAt-desc">Eklenme: Yeni → Eski</option>
-         <option value="createdAt-asc">Eklenme: Eski → Yeni</option>
-
-         <option value="price-asc">Fiyat: Düşük → Yüksek</option>
-         <option value="price-desc">Fiyat: Yüksek → Düşük</option>
-
-         <option value="range-desc">Menzil: Yüksek → Düşük</option>
-         <option value="range-asc">Menzil: Düşük → Yüksek</option>
-
-          
-        </select>
-      </div>
+    </aside>
 
     <main class="car-list">
       <table class="car-table">

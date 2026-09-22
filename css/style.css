@@ -707,3 +707,81 @@ label {
   margin: 8px auto 0;
   border-radius: 2px;
 }
+/* --- YAN YANA BUTONLAR --- */
+.controls-bar {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+.sort-box select {
+  cursor: pointer;
+  height: 100%;
+}
+
+/* --- SOLDAN AÇILAN ÇEKMECE (DRAWER) --- */
+.side-drawer {
+  position: fixed;
+  top: 0;
+  left: -320px;
+  width: 300px;
+  height: 100vh;
+  background-color: var(--ink-black, #000814);
+  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  transition: left 0.3s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  border-right: 2px solid var(--school-bus-yellow, #ffc300);
+}
+
+.side-drawer.is-open {
+  left: 0; 
+}
+
+.drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid var(--regal-navy, #003566);
+}
+
+.drawer-header h2 {
+  margin: 0;
+}
+
+.drawer-content {
+  padding: 20px;
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.drawer-footer {
+  padding: 20px;
+  border-top: 1px solid var(--regal-navy, #003566);
+}
+
+.btn-block {
+  width: 100%;
+  display: block;
+}
+
+/* --- DRAWER OVERLAY (KARARTMA PERDESÝ) --- */
+.drawer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 999;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease-in-out;
+  backdrop-filter: blur(3px);
+}
+
+.drawer-overlay.is-open {
+  opacity: 1;
+  visibility: visible;
+}

@@ -177,25 +177,21 @@ function updateStats() {
 }
 
 UI.toggleFiltersBtn.addEventListener("click", function () {
-  const isHidden = UI.filtersPanel.hidden;
-
-  UI.filtersPanel.hidden = !isHidden;
-
-  UI.toggleFiltersBtn.setAttribute(
-    "aria-expanded",
-    String(isHidden)
-  );
-
-  UI.toggleFiltersBtn.textContent = isHidden
-    ? "Filtreleri gizle"
-    : "Filtrele";
+  UI.filtersPanel.classList.toggle("is-open");
+  document.getElementById("drawer-overlay").classList.toggle("is-open");
 });
+
+function closeDrawer() {
+  UI.filtersPanel.classList.remove("is-open");
+  document.getElementById("drawer-overlay").classList.remove("is-open");
+}
+
+document.getElementById("close-drawer-btn").addEventListener("click", closeDrawer);
+document.getElementById("drawer-overlay").addEventListener("click", closeDrawer);
 
 UI.applyFiltersBtn.addEventListener("click", function () {
   fetchCars();
-  UI.filtersPanel.hidden = true;
-  UI.toggleFiltersBtn.setAttribute("aria-expanded", "false");
-  UI.toggleFiltersBtn.textContent = "Filtrele";
+  closeDrawer();
 });
 
 UI.sortBy.addEventListener("change", fetchCars);
