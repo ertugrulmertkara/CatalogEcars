@@ -21,26 +21,33 @@ app.listen(PORT, function(){
 
 app.get("/api/cars", async function(req, res)
   {
-    const {bodyType , status , sort} = req.query;
+  const {bodyType , status , sort, order} = req.query;
 
-  let filter= {};
+  const filter= {};
   if(bodyType && bodyType !== "all") filter.bodyType = bodyType;
   if(status && status !== "all") filter.status = status;
 
-  let sortObj = {createdAt: -1 };
-  if (sort === "price") sortObj = { price: 1 };
-  else if (sort === "range") sortObj = { range: -1 };
-  else if (sort === "year") sortObj = { year: -1 };
-    try 
-    {
-    const cars = await Car.find(filter).sort(sortObj);
-    res.json(cars);
-    } 
-    catch (error) 
-    {
-    console.error("Araçlar listelenirken hata:", error);
-    res.status(500).json({ error: "Veritabanı hatası" });
-    }
+  const allowedSortFields = ["createdAt", "price", "range"];
+  const sortField = allowedSortFields.includes(sort)
+  ? sort
+  : "createdAt";
+
+  const sortDirection = order === "asc" ? 1 : -1;
+
+  const sortObject = {
+    [sortField]: sortDirection
+  };
+
+  try 
+  {
+  const cars = await Car.find(filter).sort(sortObject);
+  res.json(cars);
+  } 
+  catch (error) 
+  {
+  console.error("Araçlar listelenirken hata:", error);
+  res.status(500).json({ error: "Veritabanı hatası" });
+  }
   });
 
 

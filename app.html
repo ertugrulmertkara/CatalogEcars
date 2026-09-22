@@ -204,10 +204,16 @@ class ise bir çok kez kullanılır ; bütün butonlar gibi
       <div class="field field-sm">
         <label for="sort-by">Sırala</label>
         <select id="sort-by">
-          <option value="createdAt">Eklenme</option>
-          <option value="price">Fiyat</option>
-          <option value="range">Menzil</option>
-          <option value="year">Yıl</option>
+         <option value="createdAt-desc">Eklenme: Yeni → Eski</option>
+         <option value="createdAt-asc">Eklenme: Eski → Yeni</option>
+
+         <option value="price-asc">Fiyat: Düşük → Yüksek</option>
+         <option value="price-desc">Fiyat: Yüksek → Düşük</option>
+
+         <option value="range-desc">Menzil: Yüksek → Düşük</option>
+         <option value="range-asc">Menzil: Düşük → Yüksek</option>
+
+          
         </select>
       </div>
     </section>

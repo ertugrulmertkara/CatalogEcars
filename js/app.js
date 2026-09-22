@@ -11,10 +11,21 @@
 // const benimButonum = document.querySelector('.btn-primary');class'ı btn-primary olan ilk elementi seçer. querySelectorAll('.btn-primary') class'ı btn-primary olan tüm elementleri seçer ve NodeList döndürür.
 // const popUpKutusu = document.querySelector('#image-modal');id 'si image-modal olan ilk elementi seçer.
 
+// --- UYGULAMA AYARLARI (CONFIG) ---
+const CONFIG = {
+  API_URL: "https://catalogecars.onrender.com/api/cars",
+  ITEMS_PER_PAGE: 10,
+  STATUS_ORDER: ["catalog", "shortlist", "testDrive", "rejected"],
+  STATUS_LABELS: {
+    catalog: "Katalog",
+    shortlist: "Kısa liste",
+    testDrive: "Test sürüşü",
+    rejected: "Elendi"
+  }
+};
+
 let cars = []; // isimlendirme mantığı şudur: ilk harf küçük sonraki her kelimenin ilk harfi büyüktür carPrice , asla sayıyla başlamaz
 let currentPage = 1;
-const itemsPerPage = 10;
-const API_URL = "https://catalogecars.onrender.com/api/cars";
 
 // --- DOM ELEMENTS (HTML Bağlantıları) ---
 const UI = {
@@ -36,19 +47,20 @@ const UI = {
   statRejected: document.getElementById("stat-rejected")
 };
 
-const statusLabels = {
-  catalog: "Katalog",
-  shortlist: "Kısa liste",
-  testDrive: "Test sürüşü",
-  rejected: "Elendi",
-};
-
 async function fetchCars(){
   try{
     const body = UI.filterBody.value;
     const status = UI.filterStatus.value;
-    const sort = UI.sortBy.value;
-    const queryUrl = `${API_URL}?bodyType=${body}&status=${status}&sort=${sort}`;
+    const sortValue = UI.sortBy.value;
+    const [sort, order] = sortValue.split("-");
+    const params = new URLSearchParams({
+  bodyType: body,
+  status: status,
+  sort: sort,
+  order: order
+});
+
+    const queryUrl = `${CONFIG.API_URL}?${params.toString()}`;
     const response = await fetch(queryUrl); // responselar her zaman düz metindir 
     cars = await response.json();
     currentPage = 1; // Yeni filtre geldiğinde 1. sayfadan başla
@@ -91,7 +103,7 @@ UI.carForm.addEventListener("submit",async function (e) { // içine await yazıy
 
 function renderCars() {
    UI.tbody.innerHTML = "";
-  const totalPages = Math.ceil(cars.length / itemsPerPage);
+  const totalPages = Math.ceil(cars.length / CONFIG.ITEMS_PER_PAGE);
   // 1. Boş Liste Durumu
   if (cars.length === 0) {
     UI.tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Henüz araç eklenmedi.</td></tr>';
@@ -157,7 +169,7 @@ UI.prevPageBtn.addEventListener("click", function () {
 });
 
 UI.nextPageBtn.addEventListener("click", function () {
-  const totalPages = Math.ceil(cars.length / itemsPerPage);
+  const totalPages = Math.ceil(cars.length / CONFIG.ITEMS_PER_PAGE);
   if (currentPage < totalPages) {
     currentPage++;
     renderCars();
@@ -195,15 +207,14 @@ UI.imageModal.addEventListener("click", function(e) {
   }
     async function UpdateCarStatus(id) {  
   
-    const statusOrder = ["catalog", "shortlist", "testDrive", "rejected"];
     const car = cars.find(function (c) {
       return c._id === id;
     });
-    const currentIndex = statusOrder.indexOf(car.status);
-    const newStatus = statusOrder[(currentIndex + 1) % statusOrder.length];
+    const currentIndex = CONFIG.STATUS_ORDER.indexOf(car.status);
+    const newStatus = CONFIG.STATUS_ORDER[(currentIndex + 1) % CONFIG.STATUS_ORDER.length];
     try {
       // Backend'e PATCH isteği at (sadece statüyü gönderiyoruz)
-      const response = await fetch(API_URL + "/" + id + "/status", {
+      const response = await fetch(CONFIG.API_URL + "/" + id + "/status", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json"
@@ -223,7 +234,7 @@ UI.imageModal.addEventListener("click", function(e) {
   async function deleteCar(id) {
     try {
       // 1. Backend'e "Bu id'li aracı sil" isteği atıyoruz
-      const response = await fetch(API_URL + "/" + id, {
+      const response = await fetch(CONFIG.API_URL + "/" + id, {
         method: "DELETE"
       });
       // 2. Silme başarılıysa tabloyu güncelle
@@ -239,7 +250,7 @@ UI.imageModal.addEventListener("click", function(e) {
 
   async function addCar(newCar) {
   try {
-    const response = await fetch(API_URL, {
+    const response = await fetch(CONFIG.API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(newCar)
@@ -268,7 +279,7 @@ function generateRowHtml(car){
     <td data-label="Kasa">${car.bodyType}</td>
     <td data-label="Menzil">${car.range} km</td>
     <td data-label="Fiyat">${car.price.toLocaleString("tr-TR")} TL</td>
-    <td data-label="Durum"><span class="badge badge-${car.status}">${statusLabels[car.status]}</span></td>
+    <td data-label="Durum"><span class="badge badge-${car.status}">${CONFIG.STATUS_LABELS[car.status]}</span></td>
     <td class="row-actions"><button type="button" class="btn-icon" data-id="${car._id}">Sil</button></td>
   `;
 
@@ -291,8 +302,8 @@ function getPaginatedCars(totalPages) {
   if (currentPage > totalPages) currentPage = totalPages;
   if (currentPage < 1) currentPage = 1;
   
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
+  const startIndex = (currentPage - 1) * CONFIG.ITEMS_PER_PAGE;
+  const endIndex = startIndex + CONFIG.ITEMS_PER_PAGE;
   
   return cars.slice(startIndex, endIndex); // Sadece o sayfaya ait arabaları kes ve yolla
 }

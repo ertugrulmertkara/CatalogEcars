@@ -596,7 +596,7 @@ label {
   .car-table tr {
   margin-bottom: 24px; /* Kartların arasını biraz daha açtık ki nefes alsınlar */
   background: var(--color-surface); /* Kartın içi hafif farklı bir tonda olsun */
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6); /* Derin ve karanlık bir gölge */
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6); /* Derin ve karanlık bir gölge */
   border: 1px solid rgba(16, 13, 178, 0.05); /* Kartın sınırlarını belli eden jilet gibi saydam beyaz çizgi */
   border-radius: 10px; /* Köşeleri daha modern bir kavise soktuk */
   overflow: hidden; /* Resimlerin köşelerden taşmasını engelledik */

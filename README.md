@@ -162,4 +162,7 @@ bölümüne bakılabilir.
 cd backend
 npm install
 npm start
+
+# Kia dışındaki markaları da içeren genişletilmiş araç listesini mevcut kayıtları silmeden ekle/güncelle
+npm run import:new-cars
 ```
