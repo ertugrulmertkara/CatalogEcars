@@ -786,32 +786,101 @@ label {
   visibility: visible;
 }
 
-/* --- SIRALAMA KUTUSU (SORT SELECT) --- */
-.sort-select {
-  appearance: none;
-  background-color: var(--prussian-blue, #001d3d);
-  color: #ffffff;
-  border: 1px solid var(--regal-navy, #003566);
-  border-radius: 8px;
-  padding: 10px 35px 10px 15px;
-  font-family: 'Inter', sans-serif;
-  font-weight: 500;
-  font-size: 14px;
-  cursor: pointer;
-  height: 100%;
-  outline: none;
-  transition: all 0.2s ease;
-  background-image: url('data:image/svg+xml;utf8,<svg fill="%23ffc300" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
-  background-repeat: no-repeat;
-  background-position: right 8px center;
+
+
+
+
+
+
+/* --- YAN YANA FÝLTRE VE SIRALAMA BUTONLARI (MAVÝ & ÝKÝZ) --- */
+.controls-bar {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+  align-items: center; /* Ýkisini dikeyde ortala */
 }
 
-.sort-select:hover, .sort-select:focus {
-  border-color: var(--color-accent, #ffc300);
-  box-shadow: 0 0 8px rgba(255, 195, 0, 0.3);
+.controls-bar .btn-primary, 
+.controls-bar .sort-box,
+.sort-select {
+  height: 48px !important; /* Yüksekliði KESÝN olarak kilitliyoruz */
+  box-sizing: border-box;
+}
+
+.controls-bar .btn-primary, 
+.sort-select {
+  background-color: var(--regal-navy, #003566) !important;
+  color: #ffffff !important;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  border: none;
+  border-radius: var(--radius, 8px);
+  font-size: 14px;
+  cursor: pointer;
+  
+  /* Yüksekliði bozmamasý için üst/alt padding yerine line-height kullanýyoruz */
+  padding: 0 28px; 
+  line-height: 48px;
+  
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Sýralama kutusu ok iþareti (Beyaz ok) */
+.sort-select {
+  appearance: none;
+  padding-right: 40px; /* Ok için boþluk */
+  outline: none;
+  transition: all 0.2s ease;
+  background-image: url('data:image/svg+xml;utf8,<svg fill="%23ffffff" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  width: 100%;
+}
+
+.controls-bar .btn-primary:hover,
+.sort-select:hover {
+  background-color: var(--prussian-blue, #001d3d) !important; 
 }
 
 .sort-select option {
   background-color: var(--ink-black, #000814);
-  color: #fff;
+  color: #ffffff;
+}
+
+
+
+/* --- ÝNPUT ÝÇÝ BÝRÝM YAZISI (km, TL vb.) --- */
+.input-wrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.input-wrapper input {
+  width: 100%;
+  padding-right: 35px; /* Yazýnýn input içindeki sayýnýn üstüne binmesini engeller */
+}
+
+.input-wrapper .inner-unit {
+  position: absolute;
+  right: 12px;
+  color: #a0aab2;
+  font-size: 14px;
+  font-weight: 500;
+  pointer-events: none;
+}
+
+
+/* Hiza problemini kökten çözen ek kural */
+.sort-box {
+  display: flex;
+  align-items: center;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+.controls-bar > * {
+  margin: 0 !important;
 }
