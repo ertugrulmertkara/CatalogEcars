@@ -48,6 +48,7 @@ const UI = {
   filterBrand: document.getElementById("filter-brand"),
   toggleFiltersBtn: document.getElementById("toggle-filters-btn"),
   filtersPanel: document.getElementById("filters-panel"),
+  applyFiltersBtn: document.getElementById("apply-filters-btn"),
   filterDrivetrain: document.getElementById("filter-drivetrain"),
   filterMinPrice: document.getElementById("filter-min-price"),
   filterMaxPrice: document.getElementById("filter-max-price"),
@@ -189,14 +190,14 @@ UI.toggleFiltersBtn.addEventListener("click", function () {
     ? "Filtreleri gizle"
     : "Filtrele";
 });
-UI.filterMinPrice.addEventListener("change", fetchCars);
-UI.filterMaxPrice.addEventListener("change", fetchCars);
-UI.filterMinRange.addEventListener("change", fetchCars);
-UI.filterMaxRange.addEventListener("change", fetchCars);
-UI.filterBrand.addEventListener("change", fetchCars);
-UI.filterBody.addEventListener("change", fetchCars);
-UI.filterStatus.addEventListener("change", fetchCars);
-UI.filterDrivetrain.addEventListener("change", fetchCars);
+
+UI.applyFiltersBtn.addEventListener("click", function () {
+  fetchCars();
+  UI.filtersPanel.hidden = true;
+  UI.toggleFiltersBtn.setAttribute("aria-expanded", "false");
+  UI.toggleFiltersBtn.textContent = "Filtrele";
+});
+
 UI.sortBy.addEventListener("change", fetchCars);
 fetchCars();
 
