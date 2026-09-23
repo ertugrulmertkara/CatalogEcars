@@ -485,12 +485,12 @@ UI.imageModal.addEventListener("click", function(e) {
     const newStatus = CONFIG.STATUS_ORDER[(currentIndex + 1) % CONFIG.STATUS_ORDER.length];
     try {
       const token = localStorage.getItem("jwt_token");
-      const isDealer = userRole === 'dealer';
+      const canEditGlobally = userRole === 'dealer' || userRole === 'superadmin';
       
-      // Kullanıcıysa kişisel listesine yaz, Bayiyse global listeye (PATCH)
-      const endpoint = isDealer ? `${CONFIG.API_URL}/${id}/status` : CONFIG.API_URL.replace("/cars", "/users/me/list");
-      const method = isDealer ? "PATCH" : "POST";
-      const bodyPayload = isDealer ? { status: newStatus } : { carId: id, status: newStatus };
+      // Kullanıcıysa kişisel listesine yaz, Bayi/Superadmin ise global listeye (PATCH)
+      const endpoint = canEditGlobally ? `${CONFIG.API_URL}/${id}/status` : CONFIG.API_URL.replace("/cars", "/users/me/list");
+      const method = canEditGlobally ? "PATCH" : "POST";
+      const bodyPayload = canEditGlobally ? { status: newStatus } : { carId: id, status: newStatus };
 
       const response = await fetch(endpoint, {
         method: method,
@@ -503,7 +503,8 @@ UI.imageModal.addEventListener("click", function(e) {
       if (response.ok) {
         fetchCars(); 
       } else {
-        console.error("Durum güncellenemedi.");
+        const data = await response.json();
+        alert("Durum güncellenemedi: " + (data.error || "Yetkiniz yok."));
       }
     } catch (error) {
       console.error("Sunucuya bağlanılamadı:", error);
