@@ -50,9 +50,7 @@ class ise bir çok kez kullanılır ; bütün butonlar gibi
       </div>
     </section>
     
-    <button type="button" id="toggle-form-btn" class="btn btn-primary">
-      + Araç ekle
-    </button>
+
 
     <section class="panel" id="add-car-panel" aria-labelledby="form-heading" hidden>
       <h2 id="form-heading" class="panel-title">Araç ekle</h2>
@@ -362,5 +360,19 @@ class ise bir çok kez kullanılır ; bütün butonlar gibi
   </div>
  </div>
   <script src="js/app.js"></script> <!-- motoru en sonda bağlıyoruz yoksa aracın iskeleti olmazsa hata verir. -->
+  <!-- SPEED DIAL (FAB) MENÜSÜ -->
+  <div id="fab-container" style="position: fixed; bottom: 30px; right: 30px; z-index: 1000; display: flex; flex-direction: column; align-items: flex-end; gap: 15px;">
+    
+    <!-- Alt Menü Elemanları -->
+    <div id="fab-menu" style="display: flex; flex-direction: column; gap: 10px; opacity: 0; transform: translateY(20px); pointer-events: none; transition: all 0.3s ease; align-items: flex-end;">
+      <button type="button" class="btn btn-secondary" id="menu-my-cars" style="background: var(--color-surface); color: white; border: 1px solid var(--color-border); border-radius: 30px; padding: 10px 20px; display: none; white-space: nowrap;">🚘 Kendi İlanlarım</button>
+      <button type="button" class="btn btn-secondary" id="menu-compare" style="background: var(--color-surface); color: white; border: 1px solid var(--color-border); border-radius: 30px; padding: 10px 20px; display: none; white-space: nowrap;">⚖️ Karşılaştır</button>
+      <button type="button" class="btn btn-secondary" id="toggle-form-btn" style="background: var(--color-accent); color: #000814; border: none; border-radius: 30px; padding: 10px 20px; font-weight: bold; display: none; white-space: nowrap;">➕ Araç Ekle</button>
+      <button type="button" class="btn btn-secondary" id="menu-logout" style="background: var(--color-danger); color: white; border: none; border-radius: 30px; padding: 10px 20px; display: none; white-space: nowrap;">🚪 Çıkış Yap</button>
+    </div>
+
+    <!-- Ana Buton -->
+    <button type="button" class="btn btn-primary" id="fab-main-btn" style="width: 60px; height: 60px; border-radius: 50%; padding: 0; font-size: 24px; box-shadow: 0 4px 15px rgba(255, 200, 0, 0.4); display: flex; align-items: center; justify-content: center; display: none; cursor: pointer; transition: transform 0.3s ease;">⚙️</button>
+  </div>
 </body>
 </html>

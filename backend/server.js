@@ -179,13 +179,16 @@ app.get("/api/cars", async function(req, res)
 
 // Bayi Yetki Kontrolü Ara Yazılımı
 function requireDealer(req, res, next) {
-  if (req.user.role !== 'dealer') return res.status(403).json({ error: "Sadece bayiler bu işlemi yapabilir." });
+  if (req.user.role !== 'dealer' && req.user.role !== 'superadmin') {
+    return res.status(403).json({ error: "Sadece bayiler veya süper adminler bu işlemi yapabilir." });
+  }
   next();
 }
 
 app.post("/api/cars", authenticateToken, requireDealer, async function(req,res)
 {
   try {
+    req.body.ownerId = req.user.id; // Aracı ekleyeni (bayiyi) kaydet
     const car = await Car.create(req.body);
     res.status(201).json(car);
   } catch(error) {
@@ -196,19 +199,50 @@ app.post("/api/cars", authenticateToken, requireDealer, async function(req,res)
 app.delete("/api/cars/:id", authenticateToken, requireDealer, async function(req,res)
 {
     try {
-      const car = await Car.findByIdAndDelete(req.params.id);
+      const car = await Car.findById(req.params.id);
       if(!car) return res.status(404).json({error: "Araç Bulunamadı."});      
+
+      // Sadece Superadmin veya Aracı Ekleyen Bayi silebilir
+      if (req.user.role !== 'superadmin' && car.ownerId?.toString() !== req.user.id) {
+        return res.status(403).json({error: "Sadece kendi eklediğiniz araçları silebilirsiniz."});
+      }
+
+      await Car.findByIdAndDelete(req.params.id);
       res.json({message: "Araç Silinmiştir."});
     } catch(error) {
       res.status(500).json({ error: "Veritabanı hatası" });
     }
 });
 
+app.put("/api/cars/:id", authenticateToken, requireDealer, async function(req,res)
+{
+  try {
+    const car = await Car.findById(req.params.id);
+    if(!car) return res.status(404).json({error: "Araç Bulunamadı."});      
+
+    if (req.user.role !== 'superadmin' && car.ownerId?.toString() !== req.user.id) {
+      return res.status(403).json({error: "Sadece kendi eklediğiniz araçları düzenleyebilirsiniz."});
+    }
+
+    const updatedCar = await Car.findByIdAndUpdate(req.params.id, req.body, {new: true, runValidators: true});
+    res.json(updatedCar);
+  } catch(error) {
+    res.status(500).json({ error: "Veritabanı hatası, araç güncellenemedi." });
+  }
+});
+
 app.patch("/api/cars/:id/status", authenticateToken, requireDealer, async function(req,res)
 { 
   try {
-    const car = await Car.findByIdAndUpdate(req.params.id, {status: req.body.status}, {new: true});
+    const car = await Car.findById(req.params.id);
     if (!car) return res.status(404).json({ error: "Araç bulunamadı." });
+
+    if (req.user.role !== 'superadmin' && car.ownerId?.toString() !== req.user.id) {
+      return res.status(403).json({error: "Sadece kendi eklediğiniz araçların durumunu değiştirebilirsiniz."});
+    }
+
+    car.status = req.body.status;
+    await car.save();
     res.json(car);
   } catch(error) {
     res.status(500).json({ error: "Veritabanı hatası" });

@@ -13,7 +13,8 @@ const carSchema = new mongoose.Schema(
         status: { type: String, default: "catalog" },
         imageUrl: { type: String },
         link: { type: String },
-        note: { type: String }
+        note: { type: String },
+        ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' } // Aracı ekleyen kişinin ID'si
     }
     , 
     {

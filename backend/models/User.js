@@ -12,7 +12,7 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['user', 'dealer'], // user = Normal Kullanıcı, dealer = Bayi
+    enum: ['user', 'dealer', 'superadmin'], // superadmin eklendi
     default: 'user'
   },
   // KULLANICIYA ÖZEL ARAÇ DURUMLARI (Kısa Liste, Test Sürüşü vb.)
