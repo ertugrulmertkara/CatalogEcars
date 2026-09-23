@@ -191,8 +191,8 @@ UI.tbody.addEventListener("click",async function (e) {
     
   }
      else if (e.target.classList.contains("badge")) {
-    const id = e.target.closest("tr").querySelector(".btn-icon").dataset.id;
-    UpdateCarStatus(id);
+    const id = e.target.dataset.id; // btn-icon sildiğimiz için ID'yi direkt badge'den okuyoruz
+    if (id) UpdateCarStatus(id);
   }
 
   else if (e.target.classList.contains("car-thumb")) {
@@ -359,7 +359,7 @@ function generateRowHtml(car){
   const fallbackUrl = "https://ui-avatars.com/api/?name=" + encodeURIComponent(car.brand) + "&background=random&size=100";
 
   // ROL BAZLI TABLO GÖRÜNÜMÜ
-  let statusHtml = `<span class="badge badge-${car.status}">${CONFIG.STATUS_LABELS[car.status]}</span>`;
+  let statusHtml = `<span class="badge badge-${car.status}" style="cursor: pointer;" data-id="${car._id}">${CONFIG.STATUS_LABELS[car.status]}</span>`;
   let actionsHtml = `<button type="button" class="btn-icon" data-id="${car._id}">Sil</button>`;
 
   if (userRole === 'guest') {
