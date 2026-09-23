@@ -11,7 +11,7 @@ const jwt = require("jsonwebtoken");  // YENİ: Token oluşturucu
 const app = express(); //express i kurduk 
 connectDb();
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
