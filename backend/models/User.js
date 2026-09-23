@@ -14,7 +14,16 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ['user', 'dealer'], // user = Normal Kullanıcı, dealer = Bayi
     default: 'user'
-  }
+  },
+  // KULLANICIYA ÖZEL ARAÇ DURUMLARI (Kısa Liste, Test Sürüşü vb.)
+  personalList: [{
+    carId: { type: mongoose.Schema.Types.ObjectId, ref: 'Car' },
+    status: { 
+      type: String, 
+      enum: ["catalog", "shortlist", "testDrive", "rejected"], 
+      default: "catalog" 
+    }
+  }]
 }, { timestamps: true });
 
 module.exports = mongoose.model("User", userSchema);

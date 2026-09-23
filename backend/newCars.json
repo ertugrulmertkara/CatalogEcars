@@ -1,0 +1,54 @@
+[
+  {
+    "brand": "Kia",
+    "model": "EV2 Cool",
+    "year": 2026,
+    "bodyType": "Crossover",
+    "drivetrain": "FWD",
+    "range": 310,
+    "battery": 42,
+    "price": 1719000,
+    "imageUrl": "https://ui-avatars.com/api/?name=Kia+EV2&background=random&size=400",
+    "link": "https://www.kia.com/tr/satis-merkezi/fiyat-listesi.html",
+    "note": "14.09.2026 Kia Türkiye anahtar teslim liste fiyatı. Menzil/batarya model teknik özellikleriyle eşleştirilmiştir; satın alma öncesi güncel liste kontrol edilmelidir."
+  },
+  {
+    "brand": "Kia",
+    "model": "Niro EV Elegance",
+    "year": 2026,
+    "bodyType": "SUV",
+    "drivetrain": "FWD",
+    "range": 460,
+    "battery": 64.8,
+    "price": 2299000,
+    "imageUrl": "https://ui-avatars.com/api/?name=Kia+Niro+EV&background=random&size=400",
+    "link": "https://www.kia.com/tr/satis-merkezi/fiyat-listesi.html",
+    "note": "14.09.2026 Kia Türkiye anahtar teslim liste fiyatı. Menzil/batarya model teknik özellikleriyle eşleştirilmiştir; satın alma öncesi güncel liste kontrol edilmelidir."
+  },
+  {
+    "brand": "Kia",
+    "model": "EV6 Elegance",
+    "year": 2026,
+    "bodyType": "Crossover",
+    "drivetrain": "RWD",
+    "range": 484,
+    "battery": 77.4,
+    "price": 3790000,
+    "imageUrl": "https://ui-avatars.com/api/?name=Kia+EV6&background=random&size=400",
+    "link": "https://www.kia.com/tr/satis-merkezi/fiyat-listesi.html",
+    "note": "14.09.2026 Kia Türkiye anahtar teslim liste fiyatı. Menzil/batarya model teknik özellikleriyle eşleştirilmiştir; satın alma öncesi güncel liste kontrol edilmelidir."
+  },
+  {
+    "brand": "Kia",
+    "model": "EV9 Prestige 7 koltuk",
+    "year": 2026,
+    "bodyType": "SUV",
+    "drivetrain": "RWD",
+    "range": 541,
+    "battery": 99.8,
+    "price": 6540000,
+    "imageUrl": "https://ui-avatars.com/api/?name=Kia+EV9&background=random&size=400",
+    "link": "https://www.kia.com/tr/satis-merkezi/fiyat-listesi.html",
+    "note": "14.09.2026 Kia Türkiye anahtar teslim liste fiyatı. Menzil/batarya model teknik özellikleriyle eşleştirilmiştir; satın alma öncesi güncel liste kontrol edilmelidir."
+  }
+]

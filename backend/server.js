@@ -63,8 +63,51 @@ app.post("/api/auth/login", async (req, res) => {
     res.status(500).json({ error: "Sunucu hatası!" });
   }
 });
-// ----------------------------------------
+// JWT Doğrulama Ara Yazılımı (Middleware)
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token) return res.sendStatus(401);
 
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) return res.sendStatus(403);
+    req.user = user;
+    next();
+  });
+}
+
+// 3. Kişisel Liste Getirme Route'u
+app.get("/api/users/me/list", authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ error: "Kullanıcı bulunamadı" });
+    res.json(user.personalList);
+  } catch (error) {
+    res.status(500).json({ error: "Liste getirilemedi" });
+  }
+});
+
+// 4. Kişisel Liste Güncelleme Route'u
+app.post("/api/users/me/list", authenticateToken, async (req, res) => {
+  try {
+    const { carId, status } = req.body;
+    const user = await User.findById(req.user.id);
+    
+    // Araç listede var mı?
+    const index = user.personalList.findIndex(item => item.carId.toString() === carId);
+    if (index > -1) {
+      user.personalList[index].status = status;
+    } else {
+      user.personalList.push({ carId, status });
+    }
+    
+    await user.save();
+    res.json({ message: "Kişisel liste güncellendi." });
+  } catch (error) {
+    res.status(500).json({ error: "Liste güncellenemedi" });
+  }
+});
+// ----------------------------------------
 app.get("/api/cars", async function(req, res)
   {
   const {bodyType , status , sort, order , brand , drivetrain, minPrice, maxPrice , minRange, maxRange, search} = req.query;
@@ -134,66 +177,42 @@ app.get("/api/cars", async function(req, res)
   });
 
 
-app.post("/api/cars",async function(req,res)
-{
-  try
-  {
-    const car = await Car.create(req.body);
-    res.status(201).json(car);
-  }
-  catch(error)
-  {
-    console.error("Araç eklenirken hata:", error);
-    res.status(500).json({error: "Veritabanı hatası"})
-  }
+// Bayi Yetki Kontrolü Ara Yazılımı
+function requireDealer(req, res, next) {
+  if (req.user.role !== 'dealer') return res.status(403).json({ error: "Sadece bayiler bu işlemi yapabilir." });
+  next();
 }
 
-
-
-);
-
-app.delete("/api/cars/:id", async function(req,res)
+app.post("/api/cars", authenticateToken, requireDealer, async function(req,res)
 {
-    try
-    {
+  try {
+    const car = await Car.create(req.body);
+    res.status(201).json(car);
+  } catch(error) {
+    res.status(500).json({error: "Veritabanı hatası"})
+  }
+});
+
+app.delete("/api/cars/:id", authenticateToken, requireDealer, async function(req,res)
+{
+    try {
       const car = await Car.findByIdAndDelete(req.params.id);
-      if(!car)
-      {
-        return res.status(404).json({error: "Araç Bulunamadı."});      
-      }
-        res.json({message: "Araç Silinmiştir."});
-    }
-    catch(error)
-    {
-      console.error("Araç silinirken hata:", error);
+      if(!car) return res.status(404).json({error: "Araç Bulunamadı."});      
+      res.json({message: "Araç Silinmiştir."});
+    } catch(error) {
       res.status(500).json({ error: "Veritabanı hatası" });
     }
 });
 
-
-app.patch("/api/cars/:id/status", async function(req,res)
+app.patch("/api/cars/:id/status", authenticateToken, requireDealer, async function(req,res)
 { 
-  try
-  {
-    const car = await Car.findByIdAndUpdate
-    (
-      req.params.id, 
-      {status: req.body.status},
-      {new: true}
-    );
-    if (!car)
-    {
-      return res.status(404).json({ error: "Araç bulunamadı." });
-    }
+  try {
+    const car = await Car.findByIdAndUpdate(req.params.id, {status: req.body.status}, {new: true});
+    if (!car) return res.status(404).json({ error: "Araç bulunamadı." });
     res.json(car);
-  }
-  catch(error)
-  {
-    console.error("Durum güncellenirken hata:", error);
+  } catch(error) {
     res.status(500).json({ error: "Veritabanı hatası" });
   }
-
-   
 });
 
 

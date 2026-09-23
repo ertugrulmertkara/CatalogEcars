@@ -119,9 +119,31 @@ async function fetchCars(){
     });
 
     const queryUrl = `${CONFIG.API_URL}?${params.toString()}`;
-    const response = await fetch(queryUrl); // responselar her zaman düz metindir 
-    cars = await response.json();
-    currentPage = 1; // Yeni filtre geldiğinde 1. sayfadan başla
+    const response = await fetch(queryUrl); 
+    let fetchedCars = await response.json();
+
+    // EĞER KULLANICI İSE KENDİ KİŞİSEL LİSTESİNİ (Kısa Liste vs.) ÇEK VE BİRLEŞTİR
+    if (userRole === 'user') {
+      try {
+        const token = localStorage.getItem("jwt_token");
+        const listRes = await fetch(CONFIG.API_URL.replace("/cars", "/users/me/list"), {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (listRes.ok) {
+          const personalList = await listRes.json();
+          fetchedCars.forEach(car => {
+            car.status = "catalog"; // Kullanıcılar için araba varsayılan olarak katalogdadır
+            const personalItem = personalList.find(item => item.carId === car._id);
+            if (personalItem) car.status = personalItem.status;
+          });
+        }
+      } catch (err) {
+        console.error("Kişisel liste çekilemedi", err);
+      }
+    }
+    cars = fetchedCars;
+
+    currentPage = 1; 
     renderCars();
   }
   catch(error){
@@ -299,16 +321,24 @@ UI.imageModal.addEventListener("click", function(e) {
     const currentIndex = CONFIG.STATUS_ORDER.indexOf(car.status);
     const newStatus = CONFIG.STATUS_ORDER[(currentIndex + 1) % CONFIG.STATUS_ORDER.length];
     try {
-      // Backend'e PATCH isteği at (sadece statüyü gönderiyoruz)
-      const response = await fetch(CONFIG.API_URL + "/" + id + "/status", {
-        method: "PATCH",
+      const token = localStorage.getItem("jwt_token");
+      const isDealer = userRole === 'dealer';
+      
+      // Kullanıcıysa kişisel listesine yaz, Bayiyse global listeye (PATCH)
+      const endpoint = isDealer ? `${CONFIG.API_URL}/${id}/status` : CONFIG.API_URL.replace("/cars", "/users/me/list");
+      const method = isDealer ? "PATCH" : "POST";
+      const bodyPayload = isDealer ? { status: newStatus } : { carId: id, status: newStatus };
+
+      const response = await fetch(endpoint, {
+        method: method,
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
         },
-        body: JSON.stringify({ status: newStatus })
+        body: JSON.stringify(bodyPayload)
       });
       if (response.ok) {
-        fetchCars(); // Başarılıysa listeyi güncelle
+        fetchCars(); 
       } else {
         console.error("Durum güncellenemedi.");
       }
@@ -319,11 +349,11 @@ UI.imageModal.addEventListener("click", function(e) {
 
   async function deleteCar(id) {
     try {
-      // 1. Backend'e "Bu id'li aracı sil" isteği atıyoruz
+      const token = localStorage.getItem("jwt_token");
       const response = await fetch(CONFIG.API_URL + "/" + id, {
-        method: "DELETE"
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${token}` }
       });
-      // 2. Silme başarılıysa tabloyu güncelle
       if (response.ok) {
         fetchCars(); 
       } else {
@@ -336,9 +366,13 @@ UI.imageModal.addEventListener("click", function(e) {
 
   async function addCar(newCar) {
   try {
+    const token = localStorage.getItem("jwt_token");
     const response = await fetch(CONFIG.API_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}` 
+      },
       body: JSON.stringify(newCar)
     });
     
