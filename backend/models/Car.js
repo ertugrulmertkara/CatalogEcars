@@ -10,7 +10,7 @@ const carSchema = new mongoose.Schema(
         range: { type: Number, required: true },
         battery: { type: Number },
         price: { type: Number, required: true },
-        status: { type: String, default: "catalog" },
+        status: { type: String, enum: ["catalog", "shortlist", "testDrive", "rejected"], default: "catalog" },
         imageUrl: { type: String },
         link: { type: String },
         note: { type: String },

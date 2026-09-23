@@ -1,10 +1,10 @@
-﻿const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 const Car = require('./models/Car');
+require('dotenv').config();
 
-const ATLAS_URL = "mongodb+srv://radfe46511_db_user:xEEjOyCRpOCkcn9A@cluster0.p6nwfo3.mongodb.net/catalog_ecars";
-
+// Bağlantı adresi (şifre içerir) koda yazılmaz, .env dosyasındaki DATABASE_URL'den okunur
 async function run() {
-  await mongoose.connect(ATLAS_URL);
+  await mongoose.connect(process.env.DATABASE_URL);
   const cars = await Car.find().limit(15);
   for (let c of cars) {
     console.log(`${c.brand} ${c.model}: ${c.imageUrl ? c.imageUrl.substring(0, 50) + '...' : 'YOK'}`);

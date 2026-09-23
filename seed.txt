@@ -8,11 +8,11 @@ MG MG5 Long Range Luxury 2025 Station Wagon FWD 400 61.1 1499000
 Citroën ë-C3 You 44 kWh 2025 Hatchback FWD 320 44 1525000
 Hyundai INSTER Dynamic 42 kWh 2026 Mini SUV FWD 327 42 1550000
 Fiat Grande Panda Electric 44 kWh 2025 City Car FWD 320 44 1584900
-Opel Frontera Electric 44 kWh GS 2025 Crossover FWD 305 44 160000
+Opel Frontera Electric 44 kWh GS 2025 Crossover FWD 305 44 1600000
 Citroën ë-C3 Plus 83 kW 44 kWh 2025 Hatchback FWD 320 44 1640000
 Kia EV2 107.8 kW Cool 2026 City Car FWD 310 42 1649000
 MG ZS EV Long Range Luxury 72.6 kWh 2025 SUV FWD 440 72.6 1699000
-Chery Omoda E5 Premium 61 kWh 2025 SUV FWD 430 61 170000
+Chery Omoda E5 Premium 61 kWh 2025 SUV FWD 430 61 1700000
 Citroën ë-C3 Aircross 44 kWh 2025 SUV FWD 306 44 1740000
 MG MG4 77 kWh Trophy 2025 Hatchback FWD 520 77 1799000
 Kia EV2 107.8 kW Elegance 2026 City Car FWD 310 42 1849000

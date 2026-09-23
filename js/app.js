@@ -26,13 +26,32 @@ const CONFIG = {
 
 let cars = []; // isimlendirme mantığı şudur: ilk harf küçük sonraki her kelimenin ilk harfi büyüktür carPrice , asla sayıyla başlamaz
 let currentPage = 1;
+let viewMode = "all"; // "all" | "mine" (Kendi İlanlarım) | "favs" (Kısa Listem)
+
+// Veritabanından gelen metinleri HTML'e basmadan önce zararsız hale getirir (XSS koruması).
+// Örn. not alanına <script> yazılırsa kod olarak değil, düz yazı olarak görünür.
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
 // --- GÜVENLİK VE ROL YÖNETİMİ (RBAC) ---
+// Not: Buradaki rol sadece arayüzü şekillendirmek içindir; asıl yetki kontrolü backend'de yapılır.
 function getAuthData() {
   const token = localStorage.getItem("jwt_token");
   if (!token) return { role: 'guest', id: null };
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(atob(base64));
+    // Süresi dolmuş token ile menüler görünüp istekler 403 almasın
+    if (payload.exp && payload.exp * 1000 < Date.now()) {
+      localStorage.removeItem("jwt_token");
+      return { role: 'guest', id: null };
+    }
     return { role: payload.role || 'user', id: payload.id || null };
   } catch (e) {
     return { role: 'guest', id: null };
@@ -75,8 +94,41 @@ const UI = {
   menuMyCars: document.getElementById("menu-my-cars"),
   menuMyFavs: document.getElementById("menu-my-favs"),
   menuCompare: document.getElementById("menu-compare"),
-  menuLogout: document.getElementById("menu-logout")
+  menuLogout: document.getElementById("menu-logout"),
+  fabContainer: document.getElementById("fab-container")
 };
+
+// --- AYARLAR (FAB) MENÜSÜ ---
+function setFabOpen(isOpen) {
+  UI.fabContainer.classList.toggle("is-open", isOpen);
+  UI.fabMainBtn.setAttribute("aria-expanded", String(isOpen));
+}
+
+function setFabLabel(button, text) {
+  button.querySelector(".fab-label").textContent = text;
+}
+
+// "Kendi İlanlarım" / "Kısa Listem" görünümlerini aç-kapa yapar.
+// Asıl "cars" dizisi hiç değiştirilmez; ekrana sadece getVisibleCars() sonucu çizilir.
+function setViewMode(mode) {
+  viewMode = viewMode === mode ? "all" : mode;
+  if (UI.menuMyCars) {
+    UI.menuMyCars.classList.toggle("is-active", viewMode === "mine");
+    setFabLabel(UI.menuMyCars, viewMode === "mine" ? "Tüm Araçlar" : "Kendi İlanlarım");
+  }
+  if (UI.menuMyFavs) {
+    UI.menuMyFavs.classList.toggle("is-active", viewMode === "favs");
+    setFabLabel(UI.menuMyFavs, viewMode === "favs" ? "Tüm Araçlar" : "Kısa Listem");
+  }
+  currentPage = 1;
+  renderCars();
+}
+
+function getVisibleCars() {
+  if (viewMode === "mine") return cars.filter(c => c.ownerId === currentUserId);
+  if (viewMode === "favs") return cars.filter(c => c.status === "shortlist");
+  return cars;
+}
 
 // --- YETKİ (OTORİTE) KONTROLLERİNİ UYGULA ---
 function applySecurityRules() {
@@ -86,111 +138,48 @@ function applySecurityRules() {
     if (UI.filterStatus && UI.filterStatus.parentElement) {
       UI.filterStatus.parentElement.style.display = 'none'; 
     }
-  } else {
-    // Giriş yapanlara Ana FAB Butonunu göster
-    if (UI.fabMainBtn) UI.fabMainBtn.style.display = 'flex';
-    if (UI.menuMyFavs) UI.menuMyFavs.style.display = 'block';
-    if (UI.menuCompare) UI.menuCompare.style.display = 'block';
-    if (UI.menuLogout) UI.menuLogout.style.display = 'block';
-
-    // Sadece Bayi/Superadmin için "Araç Ekle" ve "Kendi İlanlarım" butonları
-    if (userRole === 'dealer' || userRole === 'superadmin') {
-      if (UI.toggleBtn) UI.toggleBtn.style.display = 'block';
-      if (UI.menuMyCars) UI.menuMyCars.style.display = 'block';
-    }
-
-    // FAB Menü Aç/Kapa
-    if (UI.fabMainBtn) {
-      UI.fabMainBtn.addEventListener("click", () => {
-        const isOpen = UI.fabMenu.style.opacity === "1";
-        UI.fabMenu.style.opacity = isOpen ? "0" : "1";
-        UI.fabMenu.style.pointerEvents = isOpen ? "none" : "auto";
-        UI.fabMenu.style.transform = isOpen ? "translateY(20px)" : "translateY(0)";
-        UI.fabMainBtn.style.transform = isOpen ? "rotate(0deg)" : "rotate(90deg)";
-      });
-    }
-
-    // Menü İşlevleri
-    if (UI.menuLogout) {
-      UI.menuLogout.addEventListener("click", () => {
-        localStorage.removeItem("jwt_token");
-        window.location.href = "index.html";
-      });
-    }
-
-    if (UI.menuMyCars) {
-      UI.menuMyCars.addEventListener("click", () => {
-        // Tabloyu filtrele: Sadece ownerId'si benim olanlar
-        const myCars = cars.filter(c => c.ownerId === currentUserId);
-        UI.fabMainBtn.click();
-        // Hızlı bir hack ile sayfayı 1'e çekip sadece bu araçları çizdirebiliriz
-        // (Gerçekte backend query yapılmalı ama şimdilik client-side render)
-        const oldCars = [...cars];
-        cars = myCars;
-        currentPage = 1;
-        renderCars();
-        cars = oldCars; // Asıl listeyi bozma, sadece ekrana çizdirirken myCars'ı kullandık
-      });
-    }
-
-    if (UI.menuMyFavs) {
-      UI.menuMyFavs.addEventListener("click", () => {
-        const favCars = cars.filter(c => c.status === 'shortlist');
-        UI.fabMainBtn.click();
-        const oldCars = [...cars];
-        cars = favCars;
-        currentPage = 1;
-        renderCars();
-        cars = oldCars; 
-      });
-    }
-
-    if (UI.menuCompare) {
-      UI.menuCompare.addEventListener("click", () => {
-        UI.fabMainBtn.click();
-        const favCars = cars.filter(c => c.status === 'shortlist');
-        
-        if(favCars.length < 2) {
-          alert("Karşılaştırma yapabilmek için 'Kısa Liste'nizde en az 2 araç bulunmalıdır. Lütfen tablodan 2 aracı Kısa Listeye ekleyip tekrar deneyin.");
-          return;
-        }
-
-        const car1 = favCars[0];
-        const car2 = favCars[1];
-        
-        // Basit bir Modal veya Alert yerine ekranın ortasında div oluşturalım
-        const compareHtml = `
-          <div id="compare-modal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(10px);">
-            <div style="background:var(--color-surface); padding:30px; border-radius:15px; border:1px solid var(--color-border); max-width:800px; width:90%; color:white;">
-              <h2 style="text-align:center; color:var(--color-accent); margin-bottom:20px;">Araç Karşılaştırma</h2>
-              <div style="display:flex; justify-content:space-between; gap:20px;">
-                <!-- Araç 1 -->
-                <div style="flex:1; text-align:center; background:rgba(255,255,255,0.05); padding:20px; border-radius:10px;">
-                  <img src="${car1.imageUrl || 'https://placehold.co/150'}" style="width:100%; height:120px; object-fit:cover; border-radius:8px; margin-bottom:15px;">
-                  <h3 style="margin-bottom:10px;">${car1.brand} ${car1.model}</h3>
-                  <p><strong>Fiyat:</strong> ${car1.price.toLocaleString()} TL</p>
-                  <p><strong>Menzil:</strong> ${car1.range} km</p>
-                  <p><strong>Batarya:</strong> ${car1.battery || '?'} kWh</p>
-                  <p><strong>Çekiş:</strong> ${car1.drivetrain || 'Bilinmiyor'}</p>
-                </div>
-                <!-- Araç 2 -->
-                <div style="flex:1; text-align:center; background:rgba(255,255,255,0.05); padding:20px; border-radius:10px;">
-                  <img src="${car2.imageUrl || 'https://placehold.co/150'}" style="width:100%; height:120px; object-fit:cover; border-radius:8px; margin-bottom:15px;">
-                  <h3 style="margin-bottom:10px;">${car2.brand} ${car2.model}</h3>
-                  <p><strong>Fiyat:</strong> ${car2.price.toLocaleString()} TL</p>
-                  <p><strong>Menzil:</strong> ${car2.range} km</p>
-                  <p><strong>Batarya:</strong> ${car2.battery || '?'} kWh</p>
-                  <p><strong>Çekiş:</strong> ${car2.drivetrain || 'Bilinmiyor'}</p>
-                </div>
-              </div>
-              <button onclick="document.getElementById('compare-modal').remove()" class="btn-primary" style="width:100%; margin-top:20px; padding:12px; border-radius:8px; font-weight:bold;">Kapat</button>
-            </div>
-          </div>
-        `;
-        document.body.insertAdjacentHTML('beforeend', compareHtml);
-      });
-    }
+    return;
   }
+
+  // Giriş yapanlara ayarlar menüsünü göster
+  UI.fabContainer.hidden = false;
+  UI.menuMyFavs.hidden = false;
+  UI.menuCompare.hidden = false;
+  UI.menuLogout.hidden = false;
+
+  // Sadece Bayi/Superadmin için "Araç Ekle" ve "Kendi İlanlarım" butonları
+  if (userRole === 'dealer' || userRole === 'superadmin') {
+    UI.toggleBtn.hidden = false;
+    UI.menuMyCars.hidden = false;
+  }
+
+  // Menü Aç/Kapa
+  UI.fabMainBtn.addEventListener("click", () => {
+    setFabOpen(!UI.fabContainer.classList.contains("is-open"));
+  });
+
+  // Menü dışına tıklanınca veya Esc'ye basılınca kapat
+  document.addEventListener("click", (e) => {
+    if (!UI.fabContainer.contains(e.target)) setFabOpen(false);
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") setFabOpen(false);
+  });
+
+  // Bir menü öğesine tıklanınca menüyü kapat
+  UI.fabMenu.addEventListener("click", (e) => {
+    if (e.target.closest(".fab-item")) setFabOpen(false);
+  });
+
+  // Menü İşlevleri
+  UI.menuLogout.addEventListener("click", () => {
+    localStorage.removeItem("jwt_token");
+    window.location.href = "index.html";
+  });
+
+  UI.menuMyCars.addEventListener("click", () => setViewMode("mine"));
+  UI.menuMyFavs.addEventListener("click", () => setViewMode("favs"));
+  UI.menuCompare.addEventListener("click", openCompareModal);
 }
 applySecurityRules();
 
@@ -223,7 +212,8 @@ async function fetchCars(){
     });
 
     const queryUrl = `${CONFIG.API_URL}?${params.toString()}`;
-    const response = await fetch(queryUrl); 
+    const response = await fetch(queryUrl);
+    if (!response.ok) throw new Error("Sunucu " + response.status + " döndü");
     let fetchedCars = await response.json();
 
     // EĞER KULLANICI İSE KENDİ KİŞİSEL LİSTESİNİ (Kısa Liste vs.) ÇEK VE BİRLEŞTİR
@@ -255,16 +245,26 @@ async function fetchCars(){
   }
 }
 
-UI.toggleBtn.addEventListener("click", function () {
-  UI.formPanel.hidden = !UI.formPanel.hidden;
-   if (UI.formPanel.hidden) {
-    UI.toggleBtn.textContent = "+ Araç ekle";
-  } else {
-    UI.toggleBtn.textContent = "✕ Kapat";
-  }
-});
-
 let editingCarId = null;
+
+// Formu kapatır ve düzenleme modundan çıkar (Ekle/Düzenle sonrası ve iptal için ortak)
+function closeCarForm() {
+  UI.carForm.reset();
+  UI.formPanel.hidden = true;
+  editingCarId = null;
+  setFabLabel(UI.toggleBtn, "Araç Ekle");
+  document.querySelector("#car-form button[type='submit']").textContent = "Ekle";
+}
+
+UI.toggleBtn.addEventListener("click", function () {
+  if (!UI.formPanel.hidden) {
+    closeCarForm();
+    return;
+  }
+  UI.formPanel.hidden = false;
+  setFabLabel(UI.toggleBtn, "Formu Kapat");
+  UI.formPanel.scrollIntoView({ behavior: "smooth" });
+});
 
 UI.carForm.addEventListener("submit",async function (e) { 
   e.preventDefault();
@@ -310,8 +310,9 @@ function openEditModal(id) {
   document.getElementById("note").value = car.note || "";
 
   UI.formPanel.hidden = false;
-  if(UI.toggleBtn) UI.toggleBtn.textContent = "✕ Düzenlemeyi İptal Et";
+  setFabLabel(UI.toggleBtn, "Düzenlemeyi İptal Et");
   document.querySelector("#car-form button[type='submit']").textContent = "Değişiklikleri Kaydet";
+  UI.formPanel.scrollIntoView({ behavior: "smooth" });
 }
 
 async function editCar(id, updatedCar) {
@@ -328,11 +329,7 @@ async function editCar(id, updatedCar) {
     
     if (response.ok) {
       fetchCars();
-      UI.carForm.reset();
-      UI.formPanel.hidden = true;
-      editingCarId = null;
-      if(UI.toggleBtn) UI.toggleBtn.textContent = "+ Araç ekle";
-      document.querySelector("#car-form button[type='submit']").textContent = "Aracı Kaydet";
+      closeCarForm();
     } else {
       const data = await response.json();
       alert("Hata: " + data.error);
@@ -343,15 +340,20 @@ async function editCar(id, updatedCar) {
 }
 
 function renderCars() {
-   UI.tbody.innerHTML = "";
-  const totalPages = Math.ceil(cars.length / CONFIG.ITEMS_PER_PAGE);
+  UI.tbody.innerHTML = "";
+  const visibleCars = getVisibleCars();
+  const totalPages = Math.ceil(visibleCars.length / CONFIG.ITEMS_PER_PAGE);
+  updateStats();
   // 1. Boş Liste Durumu
-  if (cars.length === 0) {
-    UI.tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Henüz araç eklenmedi.</td></tr>';
+  if (visibleCars.length === 0) {
+    const emptyText = viewMode === "mine" ? "Henüz ilan eklemediniz."
+      : viewMode === "favs" ? "Kısa listenizde araç yok."
+      : "Aranan kriterlere uygun araç bulunamadı.";
+    UI.tbody.innerHTML = '<tr><td colspan="8" class="empty-state">' + emptyText + '</td></tr>';
     updatePaginationUI(0); // İşi uzmana devrettik!
     return;
   }
-  const currentCars = getPaginatedCars(totalPages);
+  const currentCars = getPaginatedCars(visibleCars, totalPages);
   // 3. Ekrana Çizme
   currentCars.forEach(function (car) {
     const tr = document.createElement("tr");
@@ -363,7 +365,6 @@ function renderCars() {
   });
   // 4. Alt Kısım Güncellemeleri
   updatePaginationUI(totalPages); // İşi uzmana devrettik!
-  updateStats()
   }
 
 
@@ -440,7 +441,7 @@ UI.prevPageBtn.addEventListener("click", function () {
 });
 
 UI.nextPageBtn.addEventListener("click", function () {
-  const totalPages = Math.ceil(cars.length / CONFIG.ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(getVisibleCars().length / CONFIG.ITEMS_PER_PAGE);
   if (currentPage < totalPages) {
     currentPage++;
     renderCars();
@@ -474,7 +475,85 @@ UI.imageModal.addEventListener("click", function(e) {
 
     UI.imageModal.classList.remove("modal-hidden");
 
+  }
+  
+  window.updateCompareUI = function(boxNum) {
+    const selectEl = document.getElementById('compare-select-' + boxNum);
+    const contentEl = document.getElementById('compare-content-' + boxNum);
+    const carId = selectEl.value;
+    
+    if (!carId) {
+      contentEl.style.display = 'none';
+      return;
+    }
+    
+    const car = cars.find(c => c._id === carId);
+    if (car) {
+      document.getElementById('comp-img-' + boxNum).src = car.imageUrl || 'https://placehold.co/150';
+      document.getElementById('comp-price-' + boxNum).textContent = car.price.toLocaleString() + ' TL';
+      document.getElementById('comp-range-' + boxNum).textContent = car.range + ' km';
+      document.getElementById('comp-battery-' + boxNum).textContent = (car.battery || '?') + ' kWh';
+      document.getElementById('comp-drivetrain-' + boxNum).textContent = car.drivetrain || 'Bilinmiyor';
+      contentEl.style.display = 'block';
+    }
+  };
 
+  function openCompareModal() {
+    let modal = document.getElementById('compare-modal');
+    if (modal) modal.remove();
+
+    const optionsHtml = cars.map(c => `<option value="${escapeHtml(c._id)}">${escapeHtml(c.brand)} ${escapeHtml(c.model)}</option>`).join('');
+    
+    const modalHtml = `
+      <div id="compare-modal" class="compare-modal-overlay">
+        <div class="compare-modal-card">
+          <h2 class="compare-title">⚖️ Araç Karşılaştırma</h2>
+          <div class="compare-grid">
+            <!-- Araç 1 -->
+            <div class="compare-item">
+              <select id="compare-select-1" class="compare-select" onchange="window.updateCompareUI(1)">
+                <option value="">1. Aracı Seçin</option>
+                ${optionsHtml}
+              </select>
+              <div id="compare-content-1" style="display:none; text-align:center;">
+                 <img id="comp-img-1" src="" style="width:100%; height:180px; object-fit:cover; border-radius:8px; margin-bottom:15px;">
+                 <div class="compare-stat"><span>Fiyat:</span> <strong id="comp-price-1"></strong></div>
+                 <div class="compare-stat"><span>Menzil:</span> <strong id="comp-range-1"></strong></div>
+                 <div class="compare-stat"><span>Batarya:</span> <strong id="comp-battery-1"></strong></div>
+                 <div class="compare-stat"><span>Çekiş:</span> <strong id="comp-drivetrain-1"></strong></div>
+              </div>
+            </div>
+            <!-- Araç 2 -->
+            <div class="compare-item">
+              <select id="compare-select-2" class="compare-select" onchange="window.updateCompareUI(2)">
+                <option value="">2. Aracı Seçin</option>
+                ${optionsHtml}
+              </select>
+              <div id="compare-content-2" style="display:none; text-align:center;">
+                 <img id="comp-img-2" src="" style="width:100%; height:180px; object-fit:cover; border-radius:8px; margin-bottom:15px;">
+                 <div class="compare-stat"><span>Fiyat:</span> <strong id="comp-price-2"></strong></div>
+                 <div class="compare-stat"><span>Menzil:</span> <strong id="comp-range-2"></strong></div>
+                 <div class="compare-stat"><span>Batarya:</span> <strong id="comp-battery-2"></strong></div>
+                 <div class="compare-stat"><span>Çekiş:</span> <strong id="comp-drivetrain-2"></strong></div>
+              </div>
+            </div>
+          </div>
+          <button type="button" onclick="document.getElementById('compare-modal').remove()" class="btn btn-primary" style="width:100%; margin-top:25px; padding:15px; font-size:16px;">Kapat</button>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Favorileri otomatik seç (varsa)
+    const favCars = cars.filter(c => c.status === 'shortlist');
+    if (favCars.length >= 1) {
+      document.getElementById('compare-select-1').value = favCars[0]._id;
+      window.updateCompareUI(1);
+    }
+    if (favCars.length >= 2) {
+      document.getElementById('compare-select-2').value = favCars[1]._id;
+      window.updateCompareUI(2);
+    }
   }
     async function UpdateCarStatus(id) {  
   
@@ -521,7 +600,8 @@ UI.imageModal.addEventListener("click", function(e) {
       if (response.ok) {
         fetchCars(); 
       } else {
-        console.error("Araç silinirken hata oluştu.");
+        const data = await response.json().catch(() => ({}));
+        alert("Araç silinemedi: " + (data.error || "Bilinmeyen hata."));
       }
     } catch (error) {
       console.error("Sunucuya bağlanılamadı:", error);
@@ -542,11 +622,10 @@ UI.imageModal.addEventListener("click", function(e) {
     
     if (response.ok) {
       fetchCars(); // Başarılıysa tabloyu güncelle
-      UI.carForm.reset(); // Formu temizle
-      UI.formPanel.hidden = true; // Paneli gizle
-      UI.toggleBtn.textContent = "+ Araç ekle"; // Buton yazısını düzelt
+      closeCarForm(); // Formu temizle ve gizle
     } else {
-      console.error("Araç eklenirken bir hata oluştu.");
+      const data = await response.json().catch(() => ({}));
+      alert("Araç eklenemedi: " + (data.error || "Bilinmeyen hata."));
     }
   } catch (error) {
     console.error("Sunucuya bağlanılamadı", error);
@@ -554,10 +633,14 @@ UI.imageModal.addEventListener("click", function(e) {
 }
 
 function generateRowHtml(car){
+  // Tüm veritabanı alanları escapeHtml'den geçer; resim yüklenemezse yedek görsel
+  // tbody üzerindeki "error" dinleyicisi tarafından data-fallback'ten alınır (inline onerror yok).
   const fallbackUrl = "https://ui-avatars.com/api/?name=" + encodeURIComponent(car.brand) + "&background=random&size=100";
+  const id = escapeHtml(car._id);
+  const status = CONFIG.STATUS_LABELS[car.status] ? car.status : "catalog";
 
   // ROL BAZLI TABLO GÖRÜNÜMÜ
-  let statusHtml = `<span class="badge badge-${car.status}" style="cursor: pointer;" data-id="${car._id}">${CONFIG.STATUS_LABELS[car.status]}</span>`;
+  let statusHtml = `<span class="badge badge-${status}" style="cursor: pointer;" data-id="${id}">${CONFIG.STATUS_LABELS[status]}</span>`;
   let actionsHtml = ``;
 
   if (userRole === 'guest') {
@@ -566,22 +649,31 @@ function generateRowHtml(car){
   } else if (userRole === 'superadmin' || (userRole === 'dealer' && car.ownerId === currentUserId)) {
     // Sadece superadmin VEYA aracı kendi ekleyen bayi silebilir/düzenleyebilir
     actionsHtml = `
-      <button type="button" class="btn-icon edit-btn" style="color: #ffc107;" data-id="${car._id}">Düzenle</button>
-      <button type="button" class="btn-icon delete-btn" data-id="${car._id}">Sil</button>
+      <button type="button" class="btn-icon edit-btn" style="color: #ffc107;" data-id="${id}">Düzenle</button>
+      <button type="button" class="btn-icon delete-btn" data-id="${id}">Sil</button>
     `;
   }
 
-   return `
-    <td data-label="Fotoğraf"><img src="${getOptimizedImageUrl(car.imageUrl)}" alt="${car.brand}" class="car-thumb" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='${fallbackUrl}'"></td>
-    <td data-label="Araç"><strong>${car.brand}</strong> ${car.model} ${car.note ? '<span class="row-note">' + car.note + '</span>' : ''}</td>
-    <td data-label="Yıl">${car.year}</td>
-    <td data-label="Kasa">${car.bodyType}</td>
-    <td data-label="Menzil">${car.range} km</td>
-    <td data-label="Fiyat">${car.price.toLocaleString("tr-TR")} TL</td>
+  return `
+    <td data-label="Fotoğraf"><img src="${escapeHtml(getOptimizedImageUrl(car.imageUrl))}" data-fallback="${escapeHtml(fallbackUrl)}" alt="${escapeHtml(car.brand)}" class="car-thumb" loading="lazy" referrerpolicy="no-referrer"></td>
+    <td data-label="Araç"><strong>${escapeHtml(car.brand)}</strong> ${escapeHtml(car.model)} ${car.note ? '<span class="row-note">' + escapeHtml(car.note) + '</span>' : ''}</td>
+    <td data-label="Yıl">${escapeHtml(car.year)}</td>
+    <td data-label="Kasa">${escapeHtml(car.bodyType)}</td>
+    <td data-label="Menzil">${escapeHtml(car.range)} km</td>
+    <td data-label="Fiyat">${Number(car.price).toLocaleString("tr-TR")} TL</td>
     <td data-label="Durum">${statusHtml}</td>
     <td class="row-actions">${actionsHtml}</td>
   `;
 }
+
+// Tablodaki bir resim yüklenemezse yedek görsele geç (error olayı kabarcıklanmaz, bu yüzden capture=true)
+UI.tbody.addEventListener("error", function (e) {
+  const img = e.target;
+  if (img.tagName === "IMG" && img.dataset.fallback && img.src !== img.dataset.fallback) {
+    img.src = img.dataset.fallback;
+  }
+}, true);
+
 function getOptimizedImageUrl(url) {
   if (!url || !url.startsWith("http")) return "https://placehold.co/60x40";
   return url;
@@ -596,12 +688,12 @@ function updatePaginationUI(totalPages) {
   UI.nextPageBtn.disabled = (currentPage === displayTotal || displayTotal === 0);
 }
 
-function getPaginatedCars(totalPages) {
+function getPaginatedCars(list, totalPages) {
   if (currentPage > totalPages) currentPage = totalPages;
   if (currentPage < 1) currentPage = 1;
   
   const startIndex = (currentPage - 1) * CONFIG.ITEMS_PER_PAGE;
   const endIndex = startIndex + CONFIG.ITEMS_PER_PAGE;
   
-  return cars.slice(startIndex, endIndex); // Sadece o sayfaya ait arabaları kes ve yolla
+  return list.slice(startIndex, endIndex); // Sadece o sayfaya ait arabaları kes ve yolla
 }

@@ -36,7 +36,8 @@ async function run() {
   try {
     await mongoose.connect(process.env.DATABASE_URL);
     console.log("Atlas'a bağlanıldı!");
-    await Car.deleteMany({}); // Önce içini temizle (çift kayıt olmasın)
+    // Sadece seed araçlarını temizle; bayilerin eklediği (ownerId olan) ilanlar silinmesin
+    await Car.deleteMany({ ownerId: { $exists: false } });
     await Car.insertMany(cars);
     console.log("100 Araba Atlas'a başarıyla yüklendi!");
   } catch (err) {
