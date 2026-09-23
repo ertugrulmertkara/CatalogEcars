@@ -27,6 +27,19 @@ const CONFIG = {
 let cars = []; // isimlendirme mantığı şudur: ilk harf küçük sonraki her kelimenin ilk harfi büyüktür carPrice , asla sayıyla başlamaz
 let currentPage = 1;
 
+// --- GÜVENLİK VE ROL YÖNETİMİ (RBAC) ---
+function getAuthRole() {
+  const token = localStorage.getItem("jwt_token");
+  if (!token) return 'guest'; // Giriş yapmamışsa direkt misafir
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.role || 'user';
+  } catch (e) {
+    return 'guest';
+  }
+}
+const userRole = getAuthRole();
+
 // --- DOM ELEMENTS (HTML Bağlantıları) ---
 const UI = {
   imageModal: document.querySelector('#image-modal'),
@@ -54,8 +67,28 @@ const UI = {
   filterMaxPrice: document.getElementById("filter-max-price"),
   filterMinRange: document.getElementById("filter-min-range"),
   filterMaxRange: document.getElementById("filter-max-range"),
-  
+  searchInput: document.getElementById("searchInput")
 };
+
+// --- YETKİ (OTORİTE) KONTROLLERİNİ UYGULA ---
+function applySecurityRules() {
+  // Eğer Bayi değilse, "Araç Ekle" butonunu ve panelini tamamen gizle
+  if (userRole !== 'dealer') {
+    if (UI.toggleBtn) UI.toggleBtn.style.display = 'none';
+    if (UI.formPanel) UI.formPanel.style.display = 'none';
+  }
+  
+  // Eğer Misafir ise (Giriş yapmamışsa)
+  if (userRole === 'guest') {
+    // Kısa liste ve Elenen istatistiklerini gizle (Sadece Toplam Araç kalsın)
+    if (UI.statShortlist) UI.statShortlist.parentElement.style.display = 'none';
+    if (UI.statRejected) UI.statRejected.parentElement.style.display = 'none';
+    if (UI.filterStatus && UI.filterStatus.parentElement) {
+      UI.filterStatus.parentElement.style.display = 'none'; // Statü filtresini de gizle
+    }
+  }
+}
+applySecurityRules();
 
 async function fetchCars(){
   try{
@@ -68,19 +101,22 @@ async function fetchCars(){
     const maxPrice = UI.filterMaxPrice.value;
     const minRange = UI.filterMinRange.value;
     const maxRange = UI.filterMaxRange.value;
+    const searchValue = UI.searchInput ? UI.searchInput.value.trim() : "";
     const [sort, order] = sortValue.split("-");
+    
     const params = new URLSearchParams({
-  brand: brand,
-  bodyType: body,
-  status: status,
-  sort: sort,
-  order: order,
-  minPrice: minPrice,
-  maxPrice: maxPrice,
-  minRange: minRange,
-  maxRange: maxRange,
-  drivetrain: drivetrain
-});
+      brand: brand,
+      bodyType: body,
+      status: status,
+      sort: sort,
+      order: order,
+      minPrice: minPrice,
+      maxPrice: maxPrice,
+      minRange: minRange,
+      maxRange: maxRange,
+      drivetrain: drivetrain,
+      search: searchValue
+    });
 
     const queryUrl = `${CONFIG.API_URL}?${params.toString()}`;
     const response = await fetch(queryUrl); // responselar her zaman düz metindir 
@@ -195,6 +231,18 @@ UI.applyFiltersBtn.addEventListener("click", function () {
 });
 
 UI.sortBy.addEventListener("change", fetchCars);
+
+// Arama kutusu için Debounce (Yazarken her harfte istek atmasını engeller, yazmayı bitirince atar)
+let searchTimeout;
+if (UI.searchInput) {
+  UI.searchInput.addEventListener("input", () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      fetchCars();
+    }, 400); // Kullanıcı yazmayı bıraktıktan 400ms sonra arama yapar
+  });
+}
+
 fetchCars();
 
 // --- Sayfalama Buton Dinleyicileri ---
@@ -310,6 +358,19 @@ UI.imageModal.addEventListener("click", function(e) {
 function generateRowHtml(car){
   const fallbackUrl = "https://ui-avatars.com/api/?name=" + encodeURIComponent(car.brand) + "&background=random&size=100";
 
+  // ROL BAZLI TABLO GÖRÜNÜMÜ
+  let statusHtml = `<span class="badge badge-${car.status}">${CONFIG.STATUS_LABELS[car.status]}</span>`;
+  let actionsHtml = `<button type="button" class="btn-icon" data-id="${car._id}">Sil</button>`;
+
+  if (userRole === 'guest') {
+    // Misafir: Durumları değiştiremez/göremez, Araç silemez. Sadece aracı inceler.
+    statusHtml = `<span style="color: rgba(255, 255, 255, 0.3); font-size: 12px;">Gizli</span>`;
+    actionsHtml = ``; 
+  } else if (userRole === 'user') {
+    // Bireysel Kullanıcı: Araç silemez, ama statü değiştirebilir (badge'e tıklayabilir).
+    actionsHtml = ``;
+  }
+
    return `
     <td data-label="Fotoğraf"><img src="${getOptimizedImageUrl(car.imageUrl)}" alt="${car.brand}" class="car-thumb" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='${fallbackUrl}'"></td>
     <td data-label="Araç"><strong>${car.brand}</strong> ${car.model} ${car.note ? '<span class="row-note">' + car.note + '</span>' : ''}</td>
@@ -317,10 +378,9 @@ function generateRowHtml(car){
     <td data-label="Kasa">${car.bodyType}</td>
     <td data-label="Menzil">${car.range} km</td>
     <td data-label="Fiyat">${car.price.toLocaleString("tr-TR")} TL</td>
-    <td data-label="Durum"><span class="badge badge-${car.status}">${CONFIG.STATUS_LABELS[car.status]}</span></td>
-    <td class="row-actions"><button type="button" class="btn-icon" data-id="${car._id}">Sil</button></td>
+    <td data-label="Durum">${statusHtml}</td>
+    <td class="row-actions">${actionsHtml}</td>
   `;
-
 }
 function getOptimizedImageUrl(url) {
   if (!url || !url.startsWith("http")) return "https://placehold.co/60x40";

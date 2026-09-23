@@ -15,8 +15,82 @@
         Türkiye'de satılan elektrikli araçları menzil, fiyat ve kasa tipine göre
         karşılaştırın. Beğendiklerinizi kısa listeye alın, elediklerinizi işaretleyin.
       </p>
-      <a href="app.html" class="btn btn-primary">Rehbere git</a>
+      <div class="login-container">
+  <div class="glass-panel">
+
+    <div class="logo-box">
+       <img src="assets/download.png" alt="CatalogEcars Logo" class="brand-logo">
+      <h2></h2> 
+    </div>
+    <!-- LOGIN FORM -->
+    <form id="loginForm">
+      <div class="input-group">
+        <span class="icon">👤</span>
+        <input type="text" id="username" placeholder="Kullanıcı Adı" required>
+      </div>
+      <div class="input-group">
+        <span class="icon">🔒</span>
+        <input type="password" id="password" placeholder="Şifre" required>
+        <span class="icon eye-icon" data-target="password">👁️</span>
+      </div>
+      <div class="options">
+        <label><input type="checkbox"> Beni Hatırla</label>
+        <a href="#">Şifremi Unuttum?</a>
+      </div>
+      <!-- Hata Mesajı Alanı -->
+      <p id="login-error" style="color: #ff4d4d; font-size: 13px; text-align: center; display: none; margin-top: 0; margin-bottom: 15px;"></p>
+      
+      <button type="submit" class="btn-login">Giriş Yap</button>
+      
+      <div style="text-align: center; margin-top: 20px; font-size: 13px; font-weight: 300;">
+        Hesabın yok mu? <a href="#" id="showRegister" style="color: rgba(255, 200, 0, 0.8); text-decoration: none; font-weight: 600;">Kayıt Ol</a>
+      </div>
+    </form>
+
+    <!-- REGISTER FORM (Başlangıçta Gizli) -->
+    <form id="registerForm" style="display: none;">
+      <div class="input-group">
+        <span class="icon">👤</span>
+        <input type="text" id="reg-username" placeholder="Yeni Kullanıcı Adı" required>
+      </div>
+      <div class="input-group">
+        <span class="icon">🔒</span>
+        <input type="password" id="reg-password" placeholder="Şifre Belirle" required>
+        <span class="icon eye-icon" data-target="reg-password">👁️</span>
+      </div>
+      <div class="input-group">
+        <span class="icon">🔒</span>
+        <input type="password" id="reg-password-confirm" placeholder="Şifreyi Doğrula" required>
+      </div>
+      
+      <!-- Hesap Türü (Rol) Seçimi -->
+      <div class="input-group">
+        <span class="icon">🏢</span>
+        <select id="reg-role" required style="width: 100%; padding: 12px 15px 12px 40px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255, 200, 0, 0.25); border-radius: 25px; color: #fff; font-size: 14px; outline: none; appearance: none; -webkit-appearance: none; cursor: pointer;">
+          <option value="user" style="color: black;">Bireysel Kullanıcı</option>
+          <option value="dealer" style="color: black;">Bayi (Kurumsal)</option>
+        </select>
+      </div>
+      
+      <!-- Hata/Başarı Mesajı Alanı -->
+      <p id="register-msg" style="font-size: 13px; text-align: center; display: none; margin-top: 0; margin-bottom: 15px;"></p>
+      
+      <button type="submit" class="btn-login">Kayıt Ol</button>
+      
+      <div style="text-align: center; margin-top: 20px; font-size: 13px; font-weight: 300;">
+        Zaten hesabın var mı? <a href="#" id="showLogin" style="color: rgba(255, 200, 0, 0.8); text-decoration: none; font-weight: 600;">Giriş Yap</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+      <!-- Butonu panelin tam ortasında tutmak için panel genişliğinde (320px) bir sarıcı ekledik -->
+      <div style="width: 100%; max-width: 320px; text-align: center;">
+        <a href="app.html" class="btn btn-primary" id="rehbereGit">Misafir Olarak İncele</a>
+      </div>
     </div>
   </main>
+  
+  <script src="js/login.js"></script>
 </body>
 </html>

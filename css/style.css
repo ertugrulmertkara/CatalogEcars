@@ -143,7 +143,16 @@ body {
   color: var(--color-text-muted);
   margin: 0 0 32px;
 }
+.logo-box {
+  text-align: center; /* Logoyu yatayda tam ortaya hizalar */
+  margin-bottom: 25px; /* Form ile (Username kutusuyla) arasına boşluk koyar */
+}
 
+.brand-logo {
+  width: 70px; /* Görseldeki gibi kibar bir boyut. Gözüne küçük gelirse 90px yapabilirsin */
+  height: auto;
+  opacity: 0.9; /* Cama daha iyi uyum sağlaması için çok hafif transparanlık */
+}
 /* --- Butonlar --- */
 
 .btn {
@@ -160,7 +169,42 @@ body {
   background: var(--color-accent);
   color: #000814; /* Sarı butonun üstünde siyah/koyu lacivert yazı mükemmel durur */
   font-weight: 700; /* Yazıyı daha belirgin yaptık */
+
+
 }
+#rehbereGit{
+  display: inline-block;
+  width: 100%;
+  max-width: 240px; /* Cam panelden (320px) daha küçük */
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 30px;
+  margin: 15px 0 0 0; 
+  
+  /* SARI CAM EFEKTİ (Sırrı burada) */
+  background: rgba(255, 200, 0, 0.15); /* Sarı rengin %15 şeffaf hali */
+  backdrop-filter: blur(15px); /* Arkasını buzlandırır */
+  -webkit-backdrop-filter: blur(15px);
+  
+  /* Sarımsı Işık Yansıması (Kenarlıklar) */
+  border: 1px solid rgba(255, 200, 0, 0.3);
+  border-top: 1px solid rgba(255, 200, 0, 0.6); /* Üstten vuran sarı ışık */
+  
+  /* Arkasına hafif sarı bir parıltı (Gölge) veriyoruz */
+  box-shadow: 0 8px 32px 0 rgba(255, 200, 0, 0.15);
+  
+  transition: all 0.3s ease;
+}
+/* Mouse ile üzerine gelince camın sarılığı ve parlaması artsın */
+#rehbereGit:hover {
+  background: rgba(255, 200, 0, 0.3); /* Sarılık %30'a çıkar */
+  transform: translateY(-2px); /* Hafif havaya kalkma efekti */
+  box-shadow: 0 10px 40px 0 rgba(255, 200, 0, 0.3);
+}
+
 
 .filters + .field-sm {
   margin-top: 16px;
@@ -562,7 +606,7 @@ label {
     max-width: 100%;
     padding: 20px;
     margin-left: 0;
-    text-align: center;
+    text-align: left; /* Tümü sola yaslı olsun */
   }
 
   .landing-title {
@@ -572,6 +616,22 @@ label {
   .landing-subtitle {
     font-size: 0.9rem;
     margin-bottom: 24px;
+  }
+
+  /* Cam Paneli Mobilde Sola Yaslı Tutmak İçin */
+  .glass-panel {
+    margin: 0; /* Ortalamayı kaldırdık, sola yaslı */
+    width: 100%;
+    max-width: 320px;
+  }
+
+  /* Misafir Butonunu Daha Küçük ve Ortalı Tutmak İçin */
+  #rehbereGit {
+    width: 100%; 
+    max-width: 240px; 
+    margin: 15px 0 20px 0; 
+    display: inline-block;
+    box-sizing: border-box;
   }
   .car-form {
     grid-template-columns: 1fr; /*Tek sütun*/
@@ -718,7 +778,7 @@ label {
   height: 100%;
 }
 
-/* --- SOLDAN A�ILAN �EKMECE (DRAWER) --- */
+/* --- SOLDAN A�ILAN �EKMECE (DRAWER) --- */
 .side-drawer {
   position: fixed;
   top: 0;
@@ -766,7 +826,7 @@ label {
   display: block;
 }
 
-/* --- DRAWER OVERLAY (KARARTMA PERDES�) --- */
+/* --- DRAWER OVERLAY (KARARTMA PERDES�) --- */
 .drawer-overlay {
   position: fixed;
   top: 0;
@@ -792,18 +852,18 @@ label {
 
 
 
-/* --- YAN YANA F�LTRE VE SIRALAMA BUTONLARI (MAV� & �K�Z) --- */
+/* --- YAN YANA F�LTRE VE SIRALAMA BUTONLARI (MAV� & �K�Z) --- */
 .controls-bar {
   display: flex;
   gap: 15px;
   margin-bottom: 20px;
-  align-items: center; /* �kisini dikeyde ortala */
+  align-items: center; /* �kisini dikeyde ortala */
 }
 
 .controls-bar .btn-primary, 
 .controls-bar .sort-box,
 .sort-select {
-  height: 48px !important; /* Y�ksekli�i KES�N olarak kilitliyoruz */
+  height: 48px !important; /* Y�ksekli�i KES�N olarak kilitliyoruz */
   box-sizing: border-box;
 }
 
@@ -818,7 +878,7 @@ label {
   font-size: 14px;
   cursor: pointer;
   
-  /* Y�ksekli�i bozmamas� i�in �st/alt padding yerine line-height kullan�yoruz */
+  /* Y�ksekli�i bozmamas� i�in �st/alt padding yerine line-height kullan�yoruz */
   padding: 0 28px; 
   line-height: 48px;
   
@@ -827,10 +887,10 @@ label {
   justify-content: center;
 }
 
-/* S�ralama kutusu ok i�areti (Beyaz ok) */
+/* S�ralama kutusu ok i�areti (Beyaz ok) */
 .sort-select {
   appearance: none;
-  padding-right: 40px; /* Ok i�in bo�luk */
+  padding-right: 40px; /* Ok i�in bo�luk */
   outline: none;
   transition: all 0.2s ease;
   background-image: url('data:image/svg+xml;utf8,<svg fill="%23ffffff" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
@@ -849,9 +909,134 @@ label {
   color: #ffffff;
 }
 
+/* SARI (AMBER/GOLD) CAM PANEL */
+.glass-panel {
+  background: rgba(255, 200, 0, 0.05); /* Sarımtırak genel zemin */
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  
+  /* Işık Yansıması: Sarımtırak */
+  border-top: 1px solid rgba(255, 200, 0, 0.4);
+  border-left: 1px solid rgba(255, 200, 0, 0.4);
+  border-right: 1px solid rgba(255, 200, 0, 0.05);
+  border-bottom: 1px solid rgba(255, 200, 0, 0.05);
+  
+  box-shadow: 10px 10px 30px rgba(0, 0, 0, 0.4);
+  border-radius: 24px;
+  padding: 35px 30px;
+  width: 320px;
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  box-sizing: border-box;
+}
 
+/* Logo İçin Altın Sarısı Parlama Efekti */
+.logo-box {
+  text-align: center;
+  margin-bottom: 25px; /* Büyük logo formu çok aşağı itmesin diye boşluğu kıstık */
+}
 
-/* --- �NPUT ��� B�R�M YAZISI (km, TL vb.) --- */
+.brand-logo {
+  width: 240px; /* Bayağı büyüttük (140px'ten 240px'e). Cam panelin neredeyse tüm enini kaplayacak */
+  max-width: 100%;
+  height: auto;
+  /* Daha güçlü, çift katmanlı parlama (Sarı neon + hafif beyaz vurgu) */
+  filter: drop-shadow(0px 6px 20px rgba(255, 200, 0, 0.8)) drop-shadow(0px 0px 8px rgba(255, 255, 255, 0.3));
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+/* Mouse ile üzerine gelince hafifçe öne çıksın */
+.brand-logo:hover {
+  transform: scale(1.05);
+  filter: drop-shadow(0px 8px 25px rgba(255, 200, 0, 1)) drop-shadow(0px 0px 10px rgba(255, 255, 255, 0.5));
+}
+
+.input-group {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 12px 15px 12px 40px;
+  background: transparent; 
+  /* Kutu kenarlıkları hafif sarı */
+  border: 1px solid rgba(255, 200, 0, 0.25);
+  border-radius: 25px; 
+  color: #fff;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+/* Kutuya tıklanınca parlayan sarı efekt */
+.input-group input:focus {
+  border: 1px solid rgba(255, 200, 0, 0.8);
+  background: rgba(255, 200, 0, 0.05);
+  box-shadow: 0 0 15px rgba(255, 200, 0, 0.15);
+}
+
+.input-group input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.input-group .icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 16px;
+  color: rgba(255, 200, 0, 0.8); /* İkonlar da sarı oldu */
+}
+
+.input-group .eye-icon {
+  left: auto;
+  right: 15px;
+  cursor: pointer;
+}
+
+.options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  margin-bottom: 25px;
+}
+
+.options a {
+  color: rgba(255, 200, 0, 0.8); /* Şifremi unuttum linki sarı */
+  text-decoration: none;
+  transition: 0.3s;
+}
+
+.options a:hover {
+  color: #fff;
+  text-shadow: 0 0 5px rgba(255, 200, 0, 0.5);
+}
+
+/* Altın Sarısı Cam Buton */
+.btn-login {
+  width: 100%;
+  padding: 14px;
+  border-radius: 25px;
+  border: 1px solid rgba(255, 200, 0, 0.4);
+  background: rgba(255, 200, 0, 0.2);
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(255, 200, 0, 0.15);
+  transition: all 0.3s ease;
+}
+
+.btn-login:hover {
+  background: rgba(255, 200, 0, 0.35);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 200, 0, 0.3);
+}
+
+/* --- �NPUT ��� B�R�M YAZISI (km, TL vb.) --- */
 .input-wrapper {
   position: relative;
   width: 100%;
@@ -861,7 +1046,7 @@ label {
 
 .input-wrapper input {
   width: 100%;
-  padding-right: 35px; /* Yaz�n�n input i�indeki say�n�n �st�ne binmesini engeller */
+  padding-right: 35px; /* Yaz�n�n input i�indeki say�n�n �st�ne binmesini engeller */
 }
 
 .input-wrapper .inner-unit {
@@ -874,7 +1059,7 @@ label {
 }
 
 
-/* Hiza problemini k�kten ��zen ek kural */
+/* Hiza problemini k�kten ��zen ek kural */
 .sort-box {
   display: flex;
   align-items: center;
