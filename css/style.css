@@ -605,18 +605,16 @@ label {
   .landing-content {
     max-width: 100%;
     padding: 20px;
-    margin-left: 10px;
-    text-align: left; /* Tümü sola yaslı olsun */
+    margin-left: 0 auto;
+    text-align: center; /* Tümü sola yaslı olsun */
   }
 
   .landing-title {
     font-size: 1.6rem;
     text-align: center;
-    margin-right: 3vh;
+    
   }
-  .brand-logo{
-    margin-right: 5vh;
-  }
+  
   .landing-subtitle {
     font-size: 0.9rem;
     margin-bottom: 24px;
@@ -624,7 +622,7 @@ label {
 
   /* Cam Paneli Mobilde Sola Yaslı Tutmak İçin */
   .glass-panel {
-    margin: 0; /* Ortalamayı kaldırdık, sola yaslı */
+    margin: 0 auto; /* Ortalamayı kaldırdık, sola yaslı */
     width: 100%;
     max-width: 320px;
   }
@@ -1518,15 +1516,32 @@ label {
 /* --- LOGO: ARABA İKONU + "SESSİZ SEÇİM" YAZISI --- */
 
 .brand-logo-car {
-  width: 92px;
+  width: 70px;
   height: auto;
 }
 
 .brand-logo-text {
   font-family: 'Montserrat', 'Inter', sans-serif;
   font-weight: 800;
-  font-size: 23px;
+  font-size: 19px;
   letter-spacing: -0.3px;
   color: #ffffff;
   white-space: nowrap;
+}
+
+/* --- MOBİL: GİRİŞ EKRANI ORTALI --- */
+@media (max-width: 768px) {
+  .landing {
+    justify-content: center;
+    align-items: center;
+    padding-top: 16px;
+  }
+
+  .landing-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin: 0 auto;
+  }
 }
