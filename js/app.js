@@ -95,17 +95,44 @@ const UI = {
   menuMyFavs: document.getElementById("menu-my-favs"),
   menuCompare: document.getElementById("menu-compare"),
   menuLogout: document.getElementById("menu-logout"),
-  fabContainer: document.getElementById("fab-container")
+  fabContainer: document.getElementById("fab-container"),
+  fabBackdrop: document.getElementById("fab-backdrop")
 };
 
 // --- AYARLAR (FAB) MENÜSÜ ---
 function setFabOpen(isOpen) {
   UI.fabContainer.classList.toggle("is-open", isOpen);
+  UI.fabBackdrop.classList.toggle("is-open", isOpen);
   UI.fabMainBtn.setAttribute("aria-expanded", String(isOpen));
+}
+
+// Görünen menü baloncuklarını ana butonun etrafında, yukarıdan (90°) sola (180°) uzanan
+// çeyrek bir yay üzerine eşit aralıkla yerleştirir. Konum CSS'e --x / --y olarak verilir.
+// Her baloncuğun yazısı da yayın dışına doğru (merkezden uzağa) konur; böylece komşu
+// baloncukların üstüne binmez. Yazının boyutu ölçülerek baloncuğa değmeyecek mesafe bulunur.
+function layoutFabItems() {
+  const items = Array.from(UI.fabMenu.querySelectorAll(".fab-item:not([hidden])"));
+  const radius = window.innerWidth < 480 ? 150 : 175;
+  const bubbleRadius = 28, gap = 8;
+  items.forEach((item, i) => {
+    const angleDeg = items.length === 1 ? 135 : 90 + (i * 90) / (items.length - 1);
+    const angle = (angleDeg * Math.PI) / 180;
+    const dx = Math.cos(angle), dy = -Math.sin(angle);
+    item.style.setProperty("--x", Math.round(dx * radius) + "px");
+    item.style.setProperty("--y", Math.round(dy * radius) + "px");
+    item.style.setProperty("--delay", i * 45 + "ms");
+
+    const label = item.querySelector(".fab-label");
+    const halfW = label.offsetWidth / 2, halfH = label.offsetHeight / 2;
+    const distance = bubbleRadius + gap + Math.abs(dx) * halfW + Math.abs(dy) * halfH;
+    item.style.setProperty("--lx", Math.round(dx * distance) + "px");
+    item.style.setProperty("--ly", Math.round(dy * distance) + "px");
+  });
 }
 
 function setFabLabel(button, text) {
   button.querySelector(".fab-label").textContent = text;
+  layoutFabItems(); // Yazı uzunluğu değişti, konumunu yeniden hesapla
 }
 
 // "Kendi İlanlarım" / "Kısa Listem" görünümlerini aç-kapa yapar.
@@ -152,6 +179,9 @@ function applySecurityRules() {
     UI.toggleBtn.hidden = false;
     UI.menuMyCars.hidden = false;
   }
+
+  layoutFabItems();
+  window.addEventListener("resize", layoutFabItems);
 
   // Menü Aç/Kapa
   UI.fabMainBtn.addEventListener("click", () => {
@@ -272,7 +302,7 @@ UI.carForm.addEventListener("submit",async function (e) {
   const carData = {
     brand: document.getElementById("brand").value,
     model: document.getElementById("model").value,
-    year: Number(document.getElementById("year").value),
+    horsepower: document.getElementById("horsepower").value ? Number(document.getElementById("horsepower").value) : undefined,
     bodyType: document.getElementById("bodyType").value,
     drivetrain: document.getElementById("drivetrain").value,
     range: Number(document.getElementById("range").value),
@@ -298,7 +328,7 @@ function openEditModal(id) {
   editingCarId = id;
   document.getElementById("brand").value = car.brand;
   document.getElementById("model").value = car.model;
-  document.getElementById("year").value = car.year;
+  document.getElementById("horsepower").value = car.horsepower || "";
   document.getElementById("bodyType").value = car.bodyType;
   document.getElementById("drivetrain").value = car.drivetrain || "";
   document.getElementById("range").value = car.range;
@@ -386,16 +416,35 @@ UI.tbody.addEventListener("click",async function (e) {
   }
 });
 
+let statsAnimated = false; // Sayma animasyonu sadece sayfa ilk açıldığında çalışır
+
 function updateStats() {
-  UI.statTotal.textContent = cars.length;
+  const values = [
+    [UI.statTotal, cars.length],
+    [UI.statShortlist, cars.filter(car => car.status === "shortlist").length],
+    [UI.statRejected, cars.filter(car => car.status === "rejected").length]
+  ];
 
-  UI.statShortlist.textContent = cars.filter(function (car) {
-    return car.status === "shortlist";
-  }).length;
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (statsAnimated || cars.length === 0 || reduceMotion) {
+    values.forEach(([el, value]) => { el.textContent = value; });
+    return;
+  }
+  statsAnimated = true;
+  values.forEach(([el, value]) => countUp(el, value));
+}
 
-  UI.statRejected.textContent = cars.filter(function (car) {
-    return car.status === "rejected";
-  }).length;
+// Sayıyı 0'dan hedef değere ~0.9 saniyede, sona doğru yavaşlayarak çıkarır
+function countUp(el, target) {
+  const duration = 900;
+  const start = performance.now();
+  function step(now) {
+    const progress = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    el.textContent = Math.round(target * eased);
+    if (progress < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
 }
 
 UI.toggleFiltersBtn.addEventListener("click", function () {
@@ -465,12 +514,12 @@ UI.imageModal.addEventListener("click", function(e) {
     const satir = imageTarget.closest("tr");
     const markaText = satir.querySelector('td[data-label="Araç"]').textContent;
     const fiyatText = satir.querySelector('td[data-label="Fiyat"]').textContent;
-    const yilText = satir.querySelector('td[data-label="Yıl"]').textContent;
+    const gucText = satir.querySelector('td[data-label="Güç"]').textContent;
     const menzilText = satir.querySelector('td[data-label="Menzil"]').textContent;
 
     document.querySelector('#modal-brand').textContent = markaText;
     document.querySelector('#modal-price').textContent = fiyatText;
-    document.querySelector('#modal-year').textContent = yilText;
+    document.querySelector('#modal-hp').textContent = gucText;
     document.querySelector('#modal-range').textContent = menzilText;
 
     UI.imageModal.classList.remove("modal-hidden");
@@ -494,6 +543,7 @@ UI.imageModal.addEventListener("click", function(e) {
       document.getElementById('comp-range-' + boxNum).textContent = car.range + ' km';
       document.getElementById('comp-battery-' + boxNum).textContent = (car.battery || '?') + ' kWh';
       document.getElementById('comp-drivetrain-' + boxNum).textContent = car.drivetrain || 'Bilinmiyor';
+      document.getElementById('comp-hp-' + boxNum).textContent = car.horsepower ? car.horsepower + ' BG' : '—';
       contentEl.style.display = 'block';
     }
   };
@@ -518,6 +568,7 @@ UI.imageModal.addEventListener("click", function(e) {
               <div id="compare-content-1" style="display:none; text-align:center;">
                  <img id="comp-img-1" src="" style="width:100%; height:180px; object-fit:cover; border-radius:8px; margin-bottom:15px;">
                  <div class="compare-stat"><span>Fiyat:</span> <strong id="comp-price-1"></strong></div>
+                 <div class="compare-stat"><span>Güç:</span> <strong id="comp-hp-1"></strong></div>
                  <div class="compare-stat"><span>Menzil:</span> <strong id="comp-range-1"></strong></div>
                  <div class="compare-stat"><span>Batarya:</span> <strong id="comp-battery-1"></strong></div>
                  <div class="compare-stat"><span>Çekiş:</span> <strong id="comp-drivetrain-1"></strong></div>
@@ -532,6 +583,7 @@ UI.imageModal.addEventListener("click", function(e) {
               <div id="compare-content-2" style="display:none; text-align:center;">
                  <img id="comp-img-2" src="" style="width:100%; height:180px; object-fit:cover; border-radius:8px; margin-bottom:15px;">
                  <div class="compare-stat"><span>Fiyat:</span> <strong id="comp-price-2"></strong></div>
+                 <div class="compare-stat"><span>Güç:</span> <strong id="comp-hp-2"></strong></div>
                  <div class="compare-stat"><span>Menzil:</span> <strong id="comp-range-2"></strong></div>
                  <div class="compare-stat"><span>Batarya:</span> <strong id="comp-battery-2"></strong></div>
                  <div class="compare-stat"><span>Çekiş:</span> <strong id="comp-drivetrain-2"></strong></div>
@@ -657,7 +709,7 @@ function generateRowHtml(car){
   return `
     <td data-label="Fotoğraf"><img src="${escapeHtml(getOptimizedImageUrl(car.imageUrl))}" data-fallback="${escapeHtml(fallbackUrl)}" alt="${escapeHtml(car.brand)}" class="car-thumb" loading="lazy" referrerpolicy="no-referrer"></td>
     <td data-label="Araç"><strong>${escapeHtml(car.brand)}</strong> ${escapeHtml(car.model)} ${car.note ? '<span class="row-note">' + escapeHtml(car.note) + '</span>' : ''}</td>
-    <td data-label="Yıl">${escapeHtml(car.year)}</td>
+    <td data-label="Güç">${formatHorsepower(car.horsepower)}</td>
     <td data-label="Kasa">${escapeHtml(car.bodyType)}</td>
     <td data-label="Menzil">${escapeHtml(car.range)} km</td>
     <td data-label="Fiyat">${Number(car.price).toLocaleString("tr-TR")} TL</td>
@@ -673,6 +725,11 @@ UI.tbody.addEventListener("error", function (e) {
     img.src = img.dataset.fallback;
   }
 }, true);
+
+// Güç bilgisi olmayan araçlarda boş hücre yerine "—" gösterilir
+function formatHorsepower(hp) {
+  return hp ? escapeHtml(hp) + " BG" : "—";
+}
 
 function getOptimizedImageUrl(url) {
   if (!url || !url.startsWith("http")) return "https://placehold.co/60x40";

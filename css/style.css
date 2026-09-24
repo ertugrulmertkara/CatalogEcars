@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@800&display=swap');
 
 /* css'de external bağlantı:<link rel="stylesheet" href="css/style.css"> , html de head kısmına yazılır.  */
 /* 
@@ -937,12 +937,15 @@ label {
 }
 
 .brand-logo {
-  width: 240px; /* Bayağı büyüttük (140px'ten 240px'e). Cam panelin neredeyse tüm enini kaplayacak */
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   max-width: 100%;
-  height: auto;
   /* Daha güçlü, çift katmanlı parlama (Sarı neon + hafif beyaz vurgu) */
   filter: drop-shadow(0px 6px 20px rgba(255, 200, 0, 0.8)) drop-shadow(0px 0px 8px rgba(255, 255, 255, 0.3));
   transition: transform 0.3s ease, filter 0.3s ease;
+  margin-right: 17vh;
+  opacity: 0.8;
 }
 
 /* Mouse ile üzerine gelince hafifçe öne çıksın */
@@ -1134,16 +1137,32 @@ label {
 
 
 
-/* --- AYARLAR MENÜSÜ (GLASS FAB / SPEED DIAL) --- */
+/* --- AYARLAR MENÜSÜ (GLASS FAB / BALONCUK YAY MENÜ) --- */
+/* Menü açılınca arka planı hafifçe karartan perde */
+.fab-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: rgba(0, 8, 20, 0.55);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.fab-backdrop.is-open {
+  opacity: 1;
+  visibility: visible;
+}
+
 .fab {
   position: fixed;
   right: 28px;
   bottom: 28px;
   z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 14px;
+  width: 60px;
+  height: 60px;
 }
 
 .fab[hidden] {
@@ -1151,8 +1170,8 @@ label {
 }
 
 .fab-icon {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   flex-shrink: 0;
   fill: none;
   stroke: currentColor;
@@ -1163,6 +1182,8 @@ label {
 
 /* Ana (dişli) buton: buzlu cam görünümü */
 .fab-main {
+  position: relative;
+  z-index: 2;
   width: 60px;
   height: 60px;
   border-radius: 50%;
@@ -1210,66 +1231,81 @@ label {
   transform: rotate(120deg);
 }
 
-/* Açılan menü öğeleri */
+/* Baloncuklar ana butonun merkezinden çıkar; son konumları (--x, --y) app.js'te yay üzerinde hesaplanır */
 .fab-menu {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 10px;
+  position: absolute;
+  inset: 0;
   pointer-events: none;
 }
 
 .fab-item {
-  display: inline-flex;
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border-radius: 50%;
+  display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 18px 10px 14px;
-  border-radius: 999px;
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 500;
-  white-space: nowrap;
+  justify-content: center;
   cursor: pointer;
-  color: var(--color-text);
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  font-family: inherit;
+  color: var(--color-accent);
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(16px) saturate(160%);
   -webkit-backdrop-filter: blur(16px) saturate(160%);
   box-shadow:
-    0 6px 24px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    0 6px 24px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
   opacity: 0;
-  transform: translateY(12px) scale(0.96);
-  transition: opacity 0.22s ease, transform 0.22s ease, background 0.2s ease, border-color 0.2s ease;
+  transform: translate(0, 0) scale(0.3);
+  transition:
+    transform 0.2s ease,
+    opacity 0.15s ease,
+    background 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .fab-item[hidden] {
   display: none;
 }
 
-.fab-item .fab-icon {
-  color: var(--color-accent);
+/* Baloncuğun yazısı: yayın dışına doğru, --lx / --ly kadar kaydırılır (app.js hesaplar) */
+.fab-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) translate(var(--lx, 0), var(--ly, 0));
+  max-width: 88px;
+  width: max-content;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.3;
+  text-align: center;
+  color: var(--color-text);
+  background: rgba(0, 8, 20, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  pointer-events: none;
 }
 
 .fab-item:hover {
-  background: rgba(255, 255, 255, 0.14);
-  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.35);
 }
 
 .fab-item.is-active {
-  border-color: rgba(255, 195, 0, 0.6);
-  background: rgba(255, 195, 0, 0.12);
+  border-color: rgba(255, 195, 0, 0.7);
+  background: rgba(255, 195, 0, 0.16);
 }
 
 .fab-item-accent {
   color: #000814;
-  font-weight: 700;
-  background: rgba(255, 195, 0, 0.85);
-  border-color: rgba(255, 225, 120, 0.8);
-}
-
-.fab-item-accent .fab-icon {
-  color: #000814;
+  background: rgba(255, 195, 0, 0.9);
+  border-color: rgba(255, 225, 120, 0.9);
 }
 
 .fab-item-accent:hover {
@@ -1277,42 +1313,216 @@ label {
   border-color: rgba(255, 225, 120, 1);
 }
 
-.fab-item-danger .fab-icon {
+.fab-item-danger {
   color: #f87171;
 }
 
 .fab-item-danger:hover {
-  background: rgba(239, 68, 68, 0.2);
-  border-color: rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.22);
+  border-color: rgba(239, 68, 68, 0.55);
 }
 
 .fab.is-open .fab-menu {
   pointer-events: auto;
 }
 
+/* Açılışta yaylanarak (baloncuk gibi) yerine oturur, sırayla belirir */
 .fab.is-open .fab-item {
   opacity: 1;
-  transform: translateY(0) scale(1);
+  transform: translate(var(--x, 0), var(--y, 0)) scale(1);
+  transition:
+    transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) var(--delay, 0ms),
+    opacity 0.25s ease var(--delay, 0ms),
+    background 0.2s ease,
+    border-color 0.2s ease;
 }
-
-/* Öğeler alttan yukarı sırayla belirir */
-.fab.is-open .fab-item:nth-last-child(1) { transition-delay: 0s; }
-.fab.is-open .fab-item:nth-last-child(2) { transition-delay: 0.04s; }
-.fab.is-open .fab-item:nth-last-child(3) { transition-delay: 0.08s; }
-.fab.is-open .fab-item:nth-last-child(4) { transition-delay: 0.12s; }
-.fab.is-open .fab-item:nth-last-child(5) { transition-delay: 0.16s; }
 
 @media (max-width: 768px) {
   .fab {
     right: 16px;
     bottom: 16px;
   }
+
+  .fab-label {
+    max-width: 76px;
+    font-size: 11px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .fab-backdrop,
   .fab-main,
   .fab-main .fab-icon,
-  .fab-item {
+  .fab-item,
+  .fab.is-open .fab-item {
     transition: none;
   }
+}
+
+
+/* --- GİRİŞ EKRANI: LOGIN KUTUSUNUN ETRAFINDA DÖNEN SARI IŞIK --- */
+/* --glow-angle değişkeninin animasyonla dönebilmesi için tipini tanıtıyoruz */
+@property --glow-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.glass-panel {
+  position: relative;
+}
+
+/* Kutunun sadece kenarında görünen (içi maskelenmiş) dönen sarı çizgi */
+.glass-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 2.5px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--glow-angle),
+    transparent 0deg 190deg,
+    rgba(255, 195, 0, 0.35) 260deg,
+    rgba(255, 215, 70, 1) 340deg,
+    #fff3c4 352deg,
+    transparent 360deg
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  animation: glowSpin 6s linear infinite;
+  pointer-events: none;
+}
+
+.glass-panel {
+  box-shadow:
+    10px 10px 30px rgba(0, 0, 0, 0.4),
+    0 0 24px rgba(255, 195, 0, 0.18);
+}
+
+@keyframes glowSpin {
+  to {
+    --glow-angle: 360deg;
+  }
+}
+
+/* --- GİRİŞ VE MİSAFİR BUTONLARI: BASINCA ŞARJ OLUYORMUŞ GİBİ DOLAR --- */
+.btn-login,
+#rehbereGit {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.btn-login.is-charging::before,
+#rehbereGit.is-charging::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(90deg, rgba(255, 195, 0, 0.25), rgba(255, 195, 0, 0.65));
+  transform-origin: left center;
+  animation: chargeFill 1.6s ease-in-out infinite;
+}
+
+.btn-login.is-charging,
+#rehbereGit.is-charging {
+  cursor: progress;
+}
+
+@keyframes chargeFill {
+  0% { transform: scaleX(0); opacity: 1; }
+  85% { transform: scaleX(1); opacity: 1; }
+  100% { transform: scaleX(1); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-panel::before {
+    animation: none;
+    --glow-angle: 45deg;
+  }
+
+  .btn-login.is-charging::before,
+  #rehbereGit.is-charging::before {
+    animation: none;
+    transform: scaleX(1);
+    opacity: 0.6;
+  }
+}
+
+
+/* --- GİRİŞ EKRANI: ŞARJ KABLOLARINDA AKAN ENERJİ --- */
+/* Işık, prizden (sağ kenar) arabaya doğru akar; sanki araç şarj oluyormuş gibi */
+.landing {
+  position: relative;
+}
+
+.landing-content {
+  position: relative;
+  z-index: 1;
+}
+
+.cable-flow {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.cable-flow path {
+  fill: none;
+  stroke-linecap: round;
+  animation: cableFlow 2.8s linear infinite;
+}
+
+/* Uzun, yarı saydam sarı kuyruk */
+.cable-tail {
+  stroke: rgba(255, 195, 0, 0.55);
+  stroke-width: 5;
+  stroke-dasharray: 22 200; /* boşluk > yol uzunluğu: aynı anda tek ışık, uçta sarkma olmaz */
+  filter: drop-shadow(0 0 6px rgba(255, 195, 0, 0.8));
+}
+
+/* Kuyruğun önündeki parlak baş (kuyrukla aynı noktadan başlar, ışık arabaya doğru akar) */
+.cable-head {
+  stroke: #fff1a8;
+  stroke-width: 6;
+  stroke-dasharray: 4 218;
+  filter: drop-shadow(0 0 5px #ffc300) drop-shadow(0 0 12px rgba(255, 195, 0, 0.9));
+}
+
+/* İkinci kablodaki ışık yarım tur geriden gelir */
+.cable-late {
+  animation-delay: -1.4s;
+}
+
+/* Işık yolun sağ ucunun dışından (offset -100) girer, kapağa ulaşıp tamamen kaybolur (offset 22) */
+@keyframes cableFlow {
+  from { stroke-dashoffset: -100; }
+  to { stroke-dashoffset: 22; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cable-flow {
+    display: none;
+  }
+}
+
+
+/* --- LOGO: ARABA İKONU + "SESSİZ SEÇİM" YAZISI --- */
+
+.brand-logo-car {
+  width: 92px;
+  height: auto;
+}
+
+.brand-logo-text {
+  font-family: 'Montserrat', 'Inter', sans-serif;
+  font-weight: 800;
+  font-size: 23px;
+  letter-spacing: -0.3px;
+  color: #ffffff;
+  white-space: nowrap;
 }

@@ -3,14 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CatalogEVcars — Elektrikli Araç Rehberi</title>
+  <title>Sessiz Seçim — Elektrikli Araç Rehberi</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <main class="landing">
+    <!-- Arka plandaki şarj kablolarının üstünde akan enerji efekti.
+         viewBox görselin gerçek boyutu (1376x768), "slice" = CSS'teki background-size: cover;
+         böylece çizgiler her ekran boyutunda görseldeki kabloların tam üstüne oturur. -->
+    <svg class="cable-flow" viewBox="0 0 1376 768" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <!-- Her kabloda iki katman: sönerek biten uzun sarı kuyruk + önde parlak baş -->
+      <path class="cable-tail" pathLength="100" d="M1034 414 C1058 418 1077 438 1077 460 L1079.5 556 C1079.5 571.5 1092 584 1107.5 584 L1376 584" />
+      <path class="cable-head" pathLength="100" d="M1034 414 C1058 418 1077 438 1077 460 L1079.5 556 C1079.5 571.5 1092 584 1107.5 584 L1376 584" />
+      <path class="cable-tail cable-late" pathLength="100" d="M1050 423 C1060 428 1066 440 1066 452 L1070 560 C1070 580 1086 595.5 1106 595.5 L1376 595.5" />
+      <path class="cable-head cable-late" pathLength="100" d="M1050 423 C1060 428 1066 440 1066 452 L1070 560 C1070 580 1086 595.5 1106 595.5 L1376 595.5" />
+    </svg>
     <div class="landing-content">
       
-      <h1 class="landing-title">CatalogEVcars</h1>
+      <h1 class="landing-title">Sessiz Seçim</h1>
       <p class="landing-subtitle">
         Türkiye'de satılan elektrikli araçları menzil, fiyat ve kasa tipine göre
         karşılaştırın. Beğendiklerinizi kısa listeye alın, elediklerinizi işaretleyin.
@@ -19,8 +29,11 @@
   <div class="glass-panel">
 
     <div class="logo-box">
-       <img src="assets/download.png" alt="CatalogEcars Logo" class="brand-logo">
-      <h2></h2> 
+       <!-- Logo: orijinal logodaki araba ikonu + aynı stilde kalın yazı -->
+       <div class="brand-logo" role="img" aria-label="Sessiz Seçim">
+         <img src="assets/logo-car.png" alt="" class="brand-logo-car">
+         <span class="brand-logo-text">Sessiz Seçim</span>
+       </div>
     </div>
     <!-- LOGIN FORM -->
     <form id="loginForm">

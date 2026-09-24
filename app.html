@@ -24,13 +24,13 @@ class ise bir çok kez kullanılır ; bütün butonlar gibi
 <head> <!-- kısmında kullanıcınjın ekranda göremdiği ama sitenin beyni olan kısımdır. sekme ismi , tasarımı(style.css) , charset UTF-8 gibi -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rehber — CatalogEcars</title>
+  <title>Rehber — Sessiz Seçim</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="app-page"> <!-- body kısmı kullanıcının gördüğü her şeydir ,  -->
 
   <header class="topbar">
-    <a href="index.html" class="topbar-brand">CatalogEVcars</a>
+    <a href="index.html" class="topbar-brand">Sessiz Seçim</a>
   </header>
 
   <div class="container"> 
@@ -60,26 +60,33 @@ class ise bir çok kez kullanılır ; bütün butonlar gibi
           <label for="brand">Marka</label>
           <input type="text" id="brand" name="brand" list="brand-options" placeholder="Marka yazın veya seçin" required autocomplete="off">
           <datalist id="brand-options">
-            <option value="Tesla"></option>
-            <option value="BYD"></option>
-            <option value="Togg"></option>
-            <option value="Volkswagen"></option>
-            <option value="Hyundai"></option>
-            <option value="Kia"></option>
-            <option value="Renault"></option>
-            <option value="Peugeot"></option>
-            <option value="Fiat"></option>
-            <option value="MG"></option>
+            <option value="Alfa Romeo"></option>
+            <option value="Alpine"></option>
             <option value="Audi"></option>
             <option value="BMW"></option>
-            <option value="Mercedes-Benz"></option>
-            <option value="Volvo"></option>
-            <option value="Skoda"></option>
-            <option value="Cupra"></option>
-            <option value="Opel"></option>
+            <option value="BYD"></option>
             <option value="Citroën"></option>
-            <option value="Nissan"></option>
+            <option value="CUPRA"></option>
+            <option value="Dacia"></option>
+            <option value="DS Automobiles"></option>
+            <option value="Fiat"></option>
             <option value="Ford"></option>
+            <option value="Hyundai"></option>
+            <option value="Jeep"></option>
+            <option value="KGM"></option>
+            <option value="Kia"></option>
+            <option value="Mercedes-Benz"></option>
+            <option value="MINI"></option>
+            <option value="Opel"></option>
+            <option value="Peugeot"></option>
+            <option value="Porsche"></option>
+            <option value="Renault"></option>
+            <option value="Skoda"></option>
+            <option value="Skywell"></option>
+            <option value="Tesla"></option>
+            <option value="TOGG"></option>
+            <option value="Volkswagen"></option>
+            <option value="Volvo"></option>
           </datalist>
         </div>
 
@@ -102,8 +109,8 @@ class ise bir çok kez kullanılır ; bütün butonlar gibi
         </div>
 
         <div class="field field-sm">
-          <label for="year">Yıl</label>
-          <input type="number" id="year" name="year" required min="2020" max="2027" placeholder="2024">
+          <label for="horsepower">Güç <span class="unit">BG</span></label>
+          <input type="number" id="horsepower" name="horsepower" min="1" placeholder="204">
         </div>
 
         <div class="field field-sm">
@@ -232,27 +239,35 @@ class ise bir çok kez kullanılır ; bütün butonlar gibi
         <div class="field field-sm">
     <label for="filter-brand">Marka</label>
     <select id="filter-brand">
+      <!-- value, veritabanındaki marka yazımıyla birebir aynı olmalı (ör. "TOGG"), aksi halde filtre sonuç döndürmez -->
       <option value="all">Hepsi</option>
-      <option value="Tesla">Tesla</option>
-      <option value="BYD">BYD</option>
-      <option value="Togg">Togg</option>
-      <option value="Volkswagen">Volkswagen</option>
-      <option value="Hyundai">Hyundai</option>
-      <option value="Kia">Kia</option>
-      <option value="Renault">Renault</option>
-      <option value="Peugeot">Peugeot</option>
-      <option value="Fiat">Fiat</option>
-      <option value="MG">MG</option>
+      <option value="Alfa Romeo">Alfa Romeo</option>
+      <option value="Alpine">Alpine</option>
       <option value="Audi">Audi</option>
       <option value="BMW">BMW</option>
-      <option value="Mercedes-Benz">Mercedes-Benz</option>
-      <option value="Volvo">Volvo</option>
-      <option value="Skoda">Skoda</option>
-      <option value="Cupra">Cupra</option>
-      <option value="Opel">Opel</option>
+      <option value="BYD">BYD</option>
       <option value="Citroën">Citroën</option>
-      <option value="Nissan">Nissan</option>
+      <option value="CUPRA">Cupra</option>
+      <option value="Dacia">Dacia</option>
+      <option value="DS Automobiles">DS</option>
+      <option value="Fiat">Fiat</option>
       <option value="Ford">Ford</option>
+      <option value="Hyundai">Hyundai</option>
+      <option value="Jeep">Jeep</option>
+      <option value="KGM">KGM</option>
+      <option value="Kia">Kia</option>
+      <option value="Mercedes-Benz">Mercedes-Benz</option>
+      <option value="MINI">Mini</option>
+      <option value="Opel">Opel</option>
+      <option value="Peugeot">Peugeot</option>
+      <option value="Porsche">Porsche</option>
+      <option value="Renault">Renault</option>
+      <option value="Skoda">Škoda</option>
+      <option value="Skywell">Skywell</option>
+      <option value="Tesla">Tesla</option>
+      <option value="TOGG">Togg</option>
+      <option value="Volkswagen">Volkswagen</option>
+      <option value="Volvo">Volvo</option>
     </select>
   </div>
         <div class="field field-sm">
@@ -334,7 +349,7 @@ class ise bir çok kez kullanılır ; bütün butonlar gibi
           <tr>
             <th scope="col"><span class="sr-only">Fotoğraf</span></th>
             <th scope="col">Araç</th>
-            <th scope="col">Yıl</th>
+            <th scope="col">Güç</th>
             <th scope="col">Kasa</th>
             <th scope="col">Menzil</th>
             <th scope="col">Fiyat</th>
@@ -360,7 +375,7 @@ class ise bir çok kez kullanılır ; bütün butonlar gibi
          <h2 id="modal-brand">Marka Model</h2>
          <p id="modal-price">Fiyat</p>
          <div class="modal-badges">
-         <span id="modal-year">Yıl</span>
+         <span id="modal-hp">Güç</span>
          <span id="modal-range">Menzil</span>
        </div>
     </div>
@@ -368,6 +383,7 @@ class ise bir çok kez kullanılır ; bütün butonlar gibi
  </div>
   <!-- SPEED DIAL (FAB) MENÜSÜ -->
   <!-- Menü öğeleri varsayılan olarak "hidden"; app.js role göre açar -->
+  <div id="fab-backdrop" class="fab-backdrop"></div>
   <div id="fab-container" class="fab" hidden>
 
     <!-- Alt Menü Elemanları -->

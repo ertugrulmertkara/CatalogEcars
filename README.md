@@ -1,6 +1,6 @@
-# CatalogEcars
+# Sessiz Seçim
 I Want to create EV cars choosing site for buying an EV car. 
-# CatalogEcars
+# Sessiz Seçim
 
 Türkiye'de satılan elektrikli araçları menzil, fiyat ve kasa tipine göre
 karşılaştırmak; beğenilenleri kısa listeye almak, elenenleri işaretlemek
@@ -29,7 +29,7 @@ TÜBİTAK stajı kapsamında, 4 haftalık full-stack yol haritasının (bkz.
 
 Detaylı şema ve kararların gerekçesi: [`docs/schema.md`](docs/schema.md)
 
-Tek varlık: `Car` (marka, model, yıl, kasa tipi, çekiş, menzil, batarya,
+Tek varlık: `Car` (marka, model, güç (BG), kasa tipi, çekiş, menzil, batarya,
 fiyat, durum, fotoğraf, link, not).
 
 ---
@@ -111,7 +111,7 @@ Backend tarafında `Node.js` ve `Express` kullanılarak hazırlanan REST API uç
 |---|---|---|---|
 | `GET` | `/ping` | Sunucunun çalışıp çalışmadığını test eder. | - |
 | `GET` | `/cars` | Sistemdeki tüm araçların listesini getirir. | - |
-| `POST` | `/cars` | Sisteme yeni bir araç ekler. | `{ brand, model, year, price, ... }` |
+| `POST` | `/cars` | Sisteme yeni bir araç ekler. | `{ brand, model, horsepower, price, ... }` |
 | `PATCH` | `/cars/:id/status` | Belirtilen ID'ye sahip aracın durumunu günceller. | `{ status: "shortlist" }` |
 | `DELETE` | `/cars/:id` | Belirtilen ID'ye sahip aracı sistemden tamamen siler. | - |
 

@@ -35,6 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const originalBtnText = loginBtn.textContent;
       loginBtn.textContent = 'Giriş Yapılıyor...';
       loginBtn.disabled = true;
+      loginBtn.classList.add('is-charging'); // Buton, istek sürerken şarj oluyormuş gibi dolar
 
       // GERÇEK BACKEND (JWT) DOĞRULAMASI
       fetch("https://catalogecars.onrender.com/api/auth/login", {
@@ -52,6 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
           loginError.style.display = 'block';
           loginBtn.textContent = originalBtnText;
           loginBtn.disabled = false;
+          loginBtn.classList.remove('is-charging');
         }
       })
       .catch(error => {
@@ -60,6 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loginError.style.display = 'block';
         loginBtn.textContent = originalBtnText;
         loginBtn.disabled = false;
+        loginBtn.classList.remove('is-charging');
       });
     });
   }
@@ -127,6 +130,17 @@ document.addEventListener('DOMContentLoaded', () => {
         registerBtn.textContent = originalBtnText;
         registerBtn.disabled = false;
       });
+    });
+  }
+
+  // --- MİSAFİR OLARAK İNCELE: BUTON DOLDUKTAN SONRA SAYFAYA GEÇ ---
+  const guestBtn = document.getElementById('rehbereGit');
+  if (guestBtn) {
+    guestBtn.addEventListener('click', (e) => {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return; // animasyonsuz, direkt geç
+      e.preventDefault();
+      guestBtn.classList.add('is-charging');
+      setTimeout(() => { window.location.href = guestBtn.href; }, 1300); // bir dolum turu kadar bekle
     });
   }
 

@@ -34,7 +34,7 @@ if (!JWT_SECRET) {
 const SELF_ASSIGNABLE_ROLES = ["user", "dealer"];
 const CAR_STATUSES = ["catalog", "shortlist", "testDrive", "rejected"];
 // İstemciden gelen body'de sadece bu alanlar kabul edilir (ownerId, _id gibi alanlar dışarıdan değiştirilemez)
-const CAR_FIELDS = ["brand", "model", "year", "bodyType", "drivetrain", "range", "battery", "price", "status", "imageUrl", "link", "note"];
+const CAR_FIELDS = ["brand", "model", "horsepower", "bodyType", "drivetrain", "range", "battery", "price", "status", "imageUrl", "link", "note"];
 
 function pickCarFields(body) {
   const data = {};

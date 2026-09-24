@@ -7,7 +7,7 @@
 | id | ObjectId | otomatik | MongoDB üretir |
 | brand | String | evet | Serbest metin |
 | model | String | evet | Serbest metin |
-| year | Number | evet | 2010–2027 |
+| horsepower | Number | hayır | Motor gücü, BG (yıl alanı kaldırıldı: tüm araçlar sıfır) |
 | bodyType | Enum | evet | Sabit liste |
 | drivetrain | Enum | hayır | Sabit liste |
 | range | Number | evet | km, WLTP |

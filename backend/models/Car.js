@@ -4,7 +4,8 @@ const carSchema = new mongoose.Schema(
     {
         brand: { type: String, required: true },
         model: { type: String, required: true },
-        year: { type: Number, required: true },
+        year: { type: Number }, // Arayüzden kaldırıldı (tüm araçlar sıfır), eski kayıtlarda duruyor
+        horsepower: { type: Number }, // Motor gücü, BG (beygir)
         bodyType: { type: String, required: true },
         drivetrain: { type: String },
         range: { type: Number, required: true },
