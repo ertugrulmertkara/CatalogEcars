@@ -605,14 +605,18 @@ label {
   .landing-content {
     max-width: 100%;
     padding: 20px;
-    margin-left: 0;
+    margin-left: 10px;
     text-align: left; /* Tümü sola yaslı olsun */
   }
 
   .landing-title {
     font-size: 1.6rem;
+    text-align: center;
+    margin-right: 3vh;
   }
-
+  .brand-logo{
+    margin-right: 5vh;
+  }
   .landing-subtitle {
     font-size: 0.9rem;
     margin-bottom: 24px;
@@ -944,7 +948,7 @@ label {
   /* Daha güçlü, çift katmanlı parlama (Sarı neon + hafif beyaz vurgu) */
   filter: drop-shadow(0px 6px 20px rgba(255, 200, 0, 0.8)) drop-shadow(0px 0px 8px rgba(255, 255, 255, 0.3));
   transition: transform 0.3s ease, filter 0.3s ease;
-  margin-right: 17vh;
+  margin-right: 18vh;
   opacity: 0.8;
 }
 
