@@ -1545,3 +1545,27 @@ label {
     margin: 0 auto;
   }
 }
+
+/* --- MOBİL: ARAÇ KARTI BAŞLIĞI --- */
+/* Masaüstünde tablo hücresi olan 'Araç' alanı, telefonda kartın başlığı olur:
+   marka + model tek satırda büyük yazılır, not (varsa) altında küçük gri satır olarak durur */
+@media (max-width: 768px) {
+  .car-table td[data-label="Araç"] {
+    display: block;
+    padding: 14px 12px 6px;
+    font-size: 1.1rem;
+    line-height: 1.35;
+    color: var(--color-text);
+  }
+
+  .car-table td[data-label="Araç"]::before {
+    content: none;
+  }
+
+  .car-table td[data-label="Araç"] .row-note {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+  }
+}
