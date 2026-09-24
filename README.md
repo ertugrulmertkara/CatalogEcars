@@ -20,7 +20,6 @@ TÜBİTAK stajı kapsamında, 4 haftalık full-stack yol haritasının (bkz.
 | Frontend | Vanilla HTML / CSS / JS | Framework yok, roadmap gereği |
 | Backend | Node.js + Express | ASP.NET Core bilgisiyle hızlı adapte olunacak |
 | Veritabanı | MongoDB Atlas | Ücretsiz katman |
-| AI asistan | GitHub Copilot | Kod yazdırmak için değil, hata anlama ve refactor için |
 | Barındırma | Vercel (frontend) + Render (backend) | İkisi de ücretsiz katman |
 
 ---
@@ -132,8 +131,6 @@ Backend tarafında `Node.js` ve `Express` kullanılarak hazırlanan REST API uç
 ## Bilinçli olarak kapsam dışı bırakılanlar
 
 - Gerçek dosya yükleme (sadece resim linki/URL destekleniyor)
-- Kullanıcı girişi / kimlik doğrulama
-- Karşılaştırma ekranı, fiyat geçmişi, grafik
 - İkinci varlık (marka/model ayrı tablo)
 - Dış API'den canlı veri çekme
 
@@ -141,25 +138,3 @@ Gerekçeler için `docs/schema.md` içindeki "Kararlar ve gerekçeleri"
 bölümüne bakılabilir.
 
 ---
-
-## Günlük rutin (roadmap gereği, hafta içi her gün)
-
-- Günlük algoritma pratiği (LeetCode/HackerRank, ~45 dk),
-  `leetcode-diary` reposuna commit
-- Günlük dokümantasyon (~30 dk): öğrenilen kavram veya çözülen hata
-- Stand-up notu: dün ne yaptım / bugün ne yapacağım / engel var mı
-- 2 saat kuralı: bir hatada 2 saatten fazla takılırsam mentöre sor
-
----
-
-## Kurulum (proje tamamlandığında)
-
-```bash
-# Frontend
-# index.html'i doğrudan tarayıcıda aç, veya bir local server ile çalıştır
-
-# Backend (Hafta 3'ten sonra)
-cd backend
-npm install
-npm start
-```
