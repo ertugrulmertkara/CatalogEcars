@@ -3,107 +3,376 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sessiz Seçim — Elektrikli Araç Rehberi</title>
-  <link rel="stylesheet" href="css/style.css">
+  <title>Sessiz Seçim — Elektrikli Araç Karşılaştırma</title>
+  <meta name="description" content="Türkiye'de satılan sıfır elektrikli araçları menzil, güç ve fiyata göre karşılaştırın, kısa listenizi oluşturun.">
+  <!-- Tema, sayfa çizilmeden önce uygulanır; böylece açılışta yanlış renk bir an görünmez -->
+  <script>
+    (function () {
+      var saved = null;
+      try { saved = localStorage.getItem("theme"); } catch (e) {}
+      var theme = saved || (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="css/catalog.css">
 </head>
 <body>
-  <main class="landing">
-    <!-- Arka plandaki şarj kablolarının üstünde akan enerji efekti.
-         viewBox görselin gerçek boyutu (1376x768), "slice" = CSS'teki background-size: cover;
-         böylece çizgiler her ekran boyutunda görseldeki kabloların tam üstüne oturur. -->
-    <svg class="cable-flow" viewBox="0 0 1376 768" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-      <!-- Her kabloda iki katman: sönerek biten uzun sarı kuyruk + önde parlak baş -->
-      <path class="cable-tail" pathLength="100" d="M1034 414 C1058 418 1077 438 1077 460 L1079.5 556 C1079.5 571.5 1092 584 1107.5 584 L1376 584" />
-      <path class="cable-head" pathLength="100" d="M1034 414 C1058 418 1077 438 1077 460 L1079.5 556 C1079.5 571.5 1092 584 1107.5 584 L1376 584" />
-      <path class="cable-tail cable-late" pathLength="100" d="M1050 423 C1060 428 1066 440 1066 452 L1070 560 C1070 580 1086 595.5 1106 595.5 L1376 595.5" />
-      <path class="cable-head cable-late" pathLength="100" d="M1050 423 C1060 428 1066 440 1066 452 L1070 560 C1070 580 1086 595.5 1106 595.5 L1376 595.5" />
-    </svg>
-    <div class="landing-content">
-      
-      <h1 class="landing-title">Sessiz Seçim</h1>
-      <p class="landing-subtitle">
-        Türkiye'de satılan elektrikli araçları menzil, fiyat ve kasa tipine göre
-        karşılaştırın. Beğendiklerinizi kısa listeye alın, elediklerinizi işaretleyin.
-      </p>
-      <div class="login-container">
-  <div class="glass-panel">
 
-    <div class="logo-box">
-       <!-- Logo: orijinal logodaki araba ikonu + aynı stilde kalın yazı -->
-       <div class="brand-logo" role="img" aria-label="Sessiz Seçim">
-         <img src="assets/logo-car.png" alt="" class="brand-logo-car">
-         <span class="brand-logo-text">Sessiz Seçim</span>
-       </div>
+  <!-- ÜST BAR -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="brand" aria-label="Sessiz Seçim ana sayfa">
+        <img src="assets/logo-car.png" alt="" class="brand-icon">
+        <span class="brand-name">Sessiz Seçim</span>
+      </a>
+
+      <div class="header-actions">
+        <button type="button" id="theme-toggle" class="icon-btn" aria-label="Temayı değiştir">
+          <svg class="icon icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <svg class="icon icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        </button>
+
+        <!-- Misafir için -->
+        <div id="guest-actions" class="auth-actions" hidden>
+          <a href="login.html" class="btn btn-ghost">Giriş Yap</a>
+          <a href="login.html?kayit" class="btn btn-primary">Ücretsiz Kayıt Ol</a>
+        </div>
+
+        <!-- Giriş yapmış kullanıcı için -->
+        <div id="user-actions" class="auth-actions" hidden>
+          <span class="greeting">Merhaba, <strong id="user-name"></strong></span>
+          <button type="button" id="logout-btn" class="icon-btn" aria-label="Çıkış yap" title="Çıkış yap">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+          </button>
+        </div>
+      </div>
     </div>
-    <!-- LOGIN FORM -->
-    <form id="loginForm">
-      <div class="input-group">
-        <span class="icon">👤</span>
-        <input type="text" id="username" placeholder="Kullanıcı Adı" required>
-      </div>
-      <div class="input-group">
-        <span class="icon">🔒</span>
-        <input type="password" id="password" placeholder="Şifre" required>
-        <span class="icon eye-icon" data-target="password">👁️</span>
-      </div>
-      <div class="options">
-        <label><input type="checkbox"> Beni Hatırla</label>
-        <a href="#">Şifremi Unuttum?</a>
-      </div>
-      <!-- Hata Mesajı Alanı -->
-      <p id="login-error" style="color: #ff4d4d; font-size: 13px; text-align: center; display: none; margin-top: 0; margin-bottom: 15px;"></p>
-      
-      <button type="submit" class="btn-login">Giriş Yap</button>
-      
-      <div style="text-align: center; margin-top: 20px; font-size: 13px; font-weight: 300;">
-        Hesabın yok mu? <a href="#" id="showRegister" style="color: rgba(255, 200, 0, 0.8); text-decoration: none; font-weight: 600;">Kayıt Ol</a>
-      </div>
-    </form>
+  </header>
 
-    <!-- REGISTER FORM (Başlangıçta Gizli) -->
-    <form id="registerForm" style="display: none;">
-      <div class="input-group">
-        <span class="icon">👤</span>
-        <input type="text" id="reg-username" placeholder="Yeni Kullanıcı Adı" required>
-      </div>
-      <div class="input-group">
-        <span class="icon">🔒</span>
-        <input type="password" id="reg-password" placeholder="Şifre Belirle" required>
-        <span class="icon eye-icon" data-target="reg-password">👁️</span>
-      </div>
-      <div class="input-group">
-        <span class="icon">🔒</span>
-        <input type="password" id="reg-password-confirm" placeholder="Şifreyi Doğrula" required>
-      </div>
-      
-      <!-- Hesap Türü (Rol) Seçimi -->
-      <div class="input-group">
-        <span class="icon">🏢</span>
-        <select id="reg-role" required style="width: 100%; padding: 12px 15px 12px 40px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255, 200, 0, 0.25); border-radius: 25px; color: #fff; font-size: 14px; outline: none; appearance: none; -webkit-appearance: none; cursor: pointer;">
-          <option value="user" style="color: black;">Bireysel Kullanıcı</option>
-          <option value="dealer" style="color: black;">Bayi (Kurumsal)</option>
-        </select>
-      </div>
-      
-      <!-- Hata/Başarı Mesajı Alanı -->
-      <p id="register-msg" style="font-size: 13px; text-align: center; display: none; margin-top: 0; margin-bottom: 15px;"></p>
-      
-      <button type="submit" class="btn-login">Kayıt Ol</button>
-      
-      <div style="text-align: center; margin-top: 20px; font-size: 13px; font-weight: 300;">
-        Zaten hesabın var mı? <a href="#" id="showLogin" style="color: rgba(255, 200, 0, 0.8); text-decoration: none; font-weight: 600;">Giriş Yap</a>
-      </div>
-    </form>
-  </div>
-</div>
+  <main class="page">
 
-      <!-- Butonu panelin tam ortasında tutmak için panel genişliğinde (320px) bir sarıcı ekledik -->
-      <div style="width: 100%; max-width: 320px; text-align: center;">
-        <a href="app.html" class="btn btn-primary" id="rehbereGit">Misafir Olarak İncele</a>
+    <!-- TANITIM ŞERİDİ (sadece misafir) -->
+    <section id="hero" class="hero" hidden>
+      <h1>Türkiye'deki tüm elektrikli araçları karşılaştır.</h1>
+      <p>Kısa listeni oluştur, test sürüşlerini planla, kararını ver.</p>
+      <a href="login.html?kayit" class="btn btn-primary btn-lg">Ücretsiz Kayıt Ol</a>
+    </section>
+
+    <!-- ÖZET KARTLARI (sadece giriş yapmış kullanıcı) -->
+    <section id="summary" class="summary" aria-label="Özet" hidden>
+      <div class="summary-card">
+        <span class="summary-value" id="stat-total">0</span>
+        <span class="summary-label">Toplam araç</span>
       </div>
+      <button type="button" class="summary-card is-clickable" id="stat-shortlist-card" title="Kısa listemi göster">
+        <span class="summary-value" id="stat-shortlist">0</span>
+        <span class="summary-label">Kısa listede</span>
+      </button>
+      <div class="summary-card">
+        <span class="summary-value" id="stat-rejected">0</span>
+        <span class="summary-label">Elenen</span>
+      </div>
+    </section>
+
+    <!-- ARAMA VE FİLTRE ÇUBUĞU -->
+    <section class="toolbar" aria-label="Arama ve filtreler">
+      <div class="search">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input type="search" id="searchInput" placeholder="Marka veya model ara (ör. Togg)" autocomplete="off">
+      </div>
+      <div class="toolbar-buttons">
+        <button type="button" id="toggle-filters-btn" class="btn btn-soft" aria-controls="filters-panel">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18M6 12h12M10 19h4"/></svg>
+          Filtrele
+        </button>
+        <div class="select-wrap">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4"/></svg>
+          <select id="sort-by" aria-label="Sıralama">
+            <option value="createdAt-desc">En yeni</option>
+            <option value="price-asc">Fiyat: Artan</option>
+            <option value="price-desc">Fiyat: Azalan</option>
+            <option value="range-desc">Menzil: Uzun</option>
+            <option value="range-asc">Menzil: Kısa</option>
+            <option value="createdAt-asc">En eski</option>
+          </select>
+        </div>
+        <button type="button" id="compare-open-btn" class="btn btn-soft">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M7 21h10M5 7h14M5 7l-3 7a3 3 0 0 0 6 0zM19 7l-3 7a3 3 0 0 0 6 0z"/></svg>
+          Karşılaştır
+        </button>
+      </div>
+    </section>
+
+    <!-- AKTİF FİLTRELER VE SONUÇ SAYISI -->
+    <div class="results-bar">
+      <p id="result-count" class="result-count" aria-live="polite"></p>
+      <div id="active-filters" class="chips"></div>
+    </div>
+
+    <!-- ARAÇ KARTLARI -->
+    <section id="car-grid" class="car-grid" aria-label="Elektrikli araçlar"></section>
+    <p id="empty-state" class="empty-state" hidden>
+      Bu kriterlere uygun araç bulunamadı.
+      <button type="button" id="clear-filters-btn" class="btn btn-ghost">Filtreleri temizle</button>
+    </p>
+    <p id="error-state" class="empty-state" hidden>Araçlar yüklenemedi. Lütfen sayfayı yenileyin.</p>
+
+    <div class="load-more-wrap">
+      <button type="button" id="load-more-btn" class="btn btn-soft btn-lg" hidden>Daha fazla göster</button>
     </div>
   </main>
-  
-  <script src="js/login.js"></script>
+
+  <footer class="site-footer">
+    <p>© 2026 Sessiz Seçim · Türkiye'deki sıfır elektrikli araçlar için karşılaştırma rehberi</p>
+  </footer>
+
+  <!-- KARŞILAŞTIRMA SEÇİM ÇUBUĞU (kartlardan araç seçilince görünür) -->
+  <div id="compare-bar" class="compare-bar" hidden>
+    <span id="compare-bar-text"></span>
+    <button type="button" id="compare-bar-clear" class="btn btn-ghost">Temizle</button>
+    <button type="button" id="compare-bar-open" class="btn btn-primary">Karşılaştır</button>
+  </div>
+
+  <!-- FİLTRE ÇEKMECESİ -->
+  <div id="drawer-overlay" class="overlay"></div>
+  <aside class="drawer" aria-label="Filtreler" id="filters-panel">
+    <div class="drawer-header">
+      <h2>Filtreler</h2>
+      <button type="button" id="close-drawer-btn" class="icon-btn" aria-label="Kapat">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+
+    <div class="drawer-content">
+      <label class="field">
+        <span>Kasa tipi</span>
+        <select id="filter-body">
+          <option value="all">Hepsi</option>
+          <option value="Hatchback">Hatchback</option>
+          <option value="Sedan">Sedan</option>
+          <option value="SUV">SUV</option>
+          <option value="Mini SUV">Mini SUV</option>
+          <option value="Crossover">Crossover</option>
+          <option value="Station Wagon">Station Wagon</option>
+          <option value="City Car">City Car</option>
+          <option value="Mikro">Mikro</option>
+          <option value="Van">Van</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Marka</span>
+        <!-- value, veritabanındaki marka yazımıyla birebir aynı olmalı (ör. "TOGG"), aksi halde filtre sonuç döndürmez -->
+        <select id="filter-brand">
+          <option value="all">Hepsi</option>
+          <option value="Alfa Romeo">Alfa Romeo</option>
+          <option value="Alpine">Alpine</option>
+          <option value="Audi">Audi</option>
+          <option value="BMW">BMW</option>
+          <option value="BYD">BYD</option>
+          <option value="Citroën">Citroën</option>
+          <option value="CUPRA">Cupra</option>
+          <option value="Dacia">Dacia</option>
+          <option value="DS Automobiles">DS</option>
+          <option value="Fiat">Fiat</option>
+          <option value="Ford">Ford</option>
+          <option value="Hyundai">Hyundai</option>
+          <option value="Jeep">Jeep</option>
+          <option value="KGM">KGM</option>
+          <option value="Kia">Kia</option>
+          <option value="Mercedes-Benz">Mercedes-Benz</option>
+          <option value="MINI">Mini</option>
+          <option value="Opel">Opel</option>
+          <option value="Peugeot">Peugeot</option>
+          <option value="Porsche">Porsche</option>
+          <option value="Renault">Renault</option>
+          <option value="Skoda">Škoda</option>
+          <option value="Skywell">Skywell</option>
+          <option value="Tesla">Tesla</option>
+          <option value="TOGG">Togg</option>
+          <option value="Volkswagen">Volkswagen</option>
+          <option value="Volvo">Volvo</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Çekiş</span>
+        <select id="filter-drivetrain">
+          <option value="all">Hepsi</option>
+          <option value="FWD">Önden çekiş (FWD)</option>
+          <option value="RWD">Arkadan itiş (RWD)</option>
+          <option value="AWD">Dört çeker (AWD)</option>
+        </select>
+      </label>
+
+      <label class="field" id="filter-status-field">
+        <span>Durum</span>
+        <select id="filter-status">
+          <option value="all">Hepsi</option>
+          <option value="catalog">Katalog</option>
+          <option value="shortlist">Kısa liste</option>
+          <option value="testDrive">Test sürüşü</option>
+          <option value="rejected">Elendi</option>
+        </select>
+      </label>
+
+      <div class="field-row">
+        <label class="field">
+          <span>En az fiyat (TL)</span>
+          <input type="number" id="filter-min-price" min="0" step="100000" placeholder="1.000.000">
+        </label>
+        <label class="field">
+          <span>En çok fiyat (TL)</span>
+          <input type="number" id="filter-max-price" min="0" step="100000" placeholder="5.000.000">
+        </label>
+      </div>
+
+      <div class="field-row">
+        <label class="field">
+          <span>En az menzil (km)</span>
+          <input type="number" id="filter-min-range" min="0" step="10" placeholder="300">
+        </label>
+        <label class="field">
+          <span>En çok menzil (km)</span>
+          <input type="number" id="filter-max-range" min="0" step="10" placeholder="600">
+        </label>
+      </div>
+    </div>
+
+    <div class="drawer-footer">
+      <button type="button" id="reset-filters-btn" class="btn btn-ghost">Temizle</button>
+      <button type="button" id="apply-filters-btn" class="btn btn-primary">Sonuçları göster</button>
+    </div>
+  </aside>
+
+  <!-- GENEL PENCERE (detay, karşılaştırma, araç formu, misafir uyarısı hep bunu kullanır) -->
+  <div id="modal" class="modal" hidden>
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-card" role="dialog" aria-modal="true">
+      <button type="button" class="icon-btn modal-close" data-close aria-label="Kapat">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- ARAÇ EKLEME / DÜZENLEME FORMU (pencereye taşınır) -->
+  <template id="car-form-template">
+    <h2 class="modal-title" id="car-form-title">Araç ekle</h2>
+    <form id="car-form" class="car-form">
+      <label class="field">
+        <span>Marka</span>
+        <input type="text" id="brand" list="brand-options" placeholder="Marka yazın veya seçin" required autocomplete="off">
+      </label>
+      <label class="field">
+        <span>Model</span>
+        <input type="text" id="model" required placeholder="EV3 Long Range">
+      </label>
+      <label class="field">
+        <span>Güç (BG)</span>
+        <input type="number" id="horsepower" min="1" placeholder="204">
+      </label>
+      <label class="field">
+        <span>Kasa tipi</span>
+        <select id="bodyType" required>
+          <option value="Hatchback">Hatchback</option>
+          <option value="Sedan">Sedan</option>
+          <option value="SUV">SUV</option>
+          <option value="Mini SUV">Mini SUV</option>
+          <option value="Crossover">Crossover</option>
+          <option value="Station Wagon">Station Wagon</option>
+          <option value="City Car">City Car</option>
+          <option value="Mikro">Mikro</option>
+          <option value="Van">Van</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Çekiş</span>
+        <select id="drivetrain">
+          <option value="">Belirtilmedi</option>
+          <option value="FWD">FWD</option>
+          <option value="RWD">RWD</option>
+          <option value="AWD">AWD</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Menzil (km, WLTP)</span>
+        <input type="number" id="range" required min="0" placeholder="520">
+      </label>
+      <label class="field">
+        <span>Batarya (kWh)</span>
+        <input type="number" id="battery" min="0" step="0.1" placeholder="75">
+      </label>
+      <label class="field">
+        <span>Fiyat (TL)</span>
+        <input type="number" id="price" required min="0" placeholder="1850000">
+      </label>
+      <label class="field field-wide">
+        <span>Fotoğraf URL</span>
+        <input type="url" id="imageUrl" placeholder="https://ornek.com/araba.jpg">
+      </label>
+      <label class="field field-wide">
+        <span>Kaynak linki</span>
+        <input type="url" id="link" placeholder="https://">
+      </label>
+      <label class="field field-wide">
+        <span>Not</span>
+        <textarea id="note" rows="2" placeholder="Bagaj küçük, arka koltuk dar"></textarea>
+      </label>
+      <div class="form-actions field-wide">
+        <button type="button" class="btn btn-ghost" data-close>Vazgeç</button>
+        <button type="submit" class="btn btn-primary" id="car-form-submit">Ekle</button>
+      </div>
+    </form>
+  </template>
+  <datalist id="brand-options">
+    <option value="Alfa Romeo"></option><option value="Alpine"></option><option value="Audi"></option>
+    <option value="BMW"></option><option value="BYD"></option><option value="Citroën"></option>
+    <option value="CUPRA"></option><option value="Dacia"></option><option value="DS Automobiles"></option>
+    <option value="Fiat"></option><option value="Ford"></option><option value="Hyundai"></option>
+    <option value="Jeep"></option><option value="KGM"></option><option value="Kia"></option>
+    <option value="Mercedes-Benz"></option><option value="MINI"></option><option value="Opel"></option>
+    <option value="Peugeot"></option><option value="Porsche"></option><option value="Renault"></option>
+    <option value="Skoda"></option><option value="Skywell"></option><option value="Tesla"></option>
+    <option value="TOGG"></option><option value="Volkswagen"></option><option value="Volvo"></option>
+  </datalist>
+
+  <!-- AYARLAR MENÜSÜ (sadece giriş yapmış kullanıcı) -->
+  <div id="fab-backdrop" class="fab-backdrop"></div>
+  <div id="fab-container" class="fab" hidden>
+    <div id="fab-menu" class="fab-menu" role="menu" aria-labelledby="fab-main-btn">
+      <button type="button" class="fab-item fab-item-accent" id="menu-add-car" role="menuitem" hidden>
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+        <span class="fab-label">Araç Ekle</span>
+      </button>
+      <button type="button" class="fab-item" id="menu-my-cars" role="menuitem" hidden>
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 17h14M5 17a2 2 0 1 0 4 0M15 17a2 2 0 1 0 4 0M3 17v-4l2-5a2 2 0 0 1 1.9-1.4h10.2A2 2 0 0 1 19 8l2 5v4"/><path d="M3 13h18"/></svg>
+        <span class="fab-label">Kendi İlanlarım</span>
+      </button>
+      <button type="button" class="fab-item" id="menu-my-favs" role="menuitem">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21l-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        <span class="fab-label">Kısa Listem</span>
+      </button>
+      <button type="button" class="fab-item fab-item-danger" id="menu-logout" role="menuitem">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+        <span class="fab-label">Çıkış Yap</span>
+      </button>
+    </div>
+    <button type="button" class="fab-main" id="fab-main-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="fab-menu" aria-label="Ayarlar menüsü">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+    </button>
+  </div>
+
+  <!-- DURUM SEÇİM MENÜSÜ (bir kartın durum etiketine tıklanınca açılır) -->
+  <div id="status-menu" class="status-menu" role="menu" hidden>
+    <button type="button" data-status="catalog" role="menuitem">Katalog</button>
+    <button type="button" data-status="shortlist" role="menuitem">Kısa liste</button>
+    <button type="button" data-status="testDrive" role="menuitem">Test sürüşü</button>
+    <button type="button" data-status="rejected" role="menuitem">Elendi</button>
+  </div>
+
+  <script src="js/app.js"></script>
 </body>
 </html>

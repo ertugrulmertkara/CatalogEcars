@@ -1,21 +1,15 @@
-// let , const , var değişken tanımlamak için kullanılır. let ve const ES6 ile gelmiştir. var eski sürümlerde kullanılırdı. let ve const block scope (sadece {} içinde geçerli) iken var function scope (sadece function içinde geçerli) dir.
-// let içindeki değer sonradan değiştirilebilir. const içindeki değer sonradan değiştirilemez. var içindeki değer sonradan değiştirilebilir.
-// `` backtick ile yazılan stringler template literal olarak adlandırılır. ${} ile değişkenler string içine gömülebilir.
-// Sadece + işareti string'leri yapıştırır. Diğer matematik işlemleri string'i zorla Number'a çevirir.
-// false ifadeler: 0, "", null, undefined, NaN
-// equality operators: == (eşit mi), === (tipi ve değeri eşit mi), != (eşit değil mi), !== (tipi ve değeri eşit değil mi) === bunu kullan katıdır. 
-//'use strict'; bu ifade ilk satıra yazılır amacı js'in katı olmasını sağlamaktır. Örn: değişken tanımlamadan kullanılamaz, debugging kolaylaştırır, performansı artırır.
-// function expression: const myFunc = function() { ... } , function declaration: function myFunc() { ... } , neden kullanılır: function declaration hoisting yapar, function expression yapmaz.
-// ARROW FUNCTION Yöntemi => const myFunc = () => { ... } , function expression ile aynı işlevi görür. this bağlamını korur.
-// for (let i = 1; i <= x; i++)
-// const benimButonum = document.querySelector('.btn-primary');class'ı btn-primary olan ilk elementi seçer. querySelectorAll('.btn-primary') class'ı btn-primary olan tüm elementleri seçer ve NodeList döndürür.
-// const popUpKutusu = document.querySelector('#image-modal');id 'si image-modal olan ilk elementi seçer.
+// =====================================================================
+//  Sessiz Seçim — Katalog sayfası (index.html)
+//  Araçları kart olarak listeler; filtre, arama, sıralama, karşılaştırma,
+//  kişisel liste (kısa liste vb.), bayi ilan yönetimi ve tema geçişi.
+// =====================================================================
 
 // --- UYGULAMA AYARLARI (CONFIG) ---
 const CONFIG = {
   API_URL: "https://catalogecars.onrender.com/api/cars",
-  ITEMS_PER_PAGE: 10,
-  STATUS_ORDER: ["catalog", "shortlist", "testDrive", "rejected"],
+  LIST_URL: "https://catalogecars.onrender.com/api/users/me/list",
+  PAGE_SIZE: 12, // "Daha fazla göster" her basışta bu kadar araç ekler
+  PENDING_KEY: "pending_shortlist", // misafirin kayıttan önce eklemek istediği araç
   STATUS_LABELS: {
     catalog: "Katalog",
     shortlist: "Kısa liste",
@@ -24,12 +18,15 @@ const CONFIG = {
   }
 };
 
-let cars = []; // isimlendirme mantığı şudur: ilk harf küçük sonraki her kelimenin ilk harfi büyüktür carPrice , asla sayıyla başlamaz
-let currentPage = 1;
-let viewMode = "all"; // "all" | "mine" (Kendi İlanlarım) | "favs" (Kısa Listem)
+// --- DURUM (STATE) ---
+let cars = [];                      // sunucudan gelen araçlar (filtre ve sıralama uygulanmış)
+let visibleCount = CONFIG.PAGE_SIZE; // ekranda gösterilen kart sayısı
+let viewMode = "all";               // "all" | "mine" (Kendi İlanlarım) | "favs" (Kısa Listem)
+let compareIds = [];                // karşılaştırma için seçilen en fazla 2 aracın id'si
+let editingCarId = null;            // formda düzenlenen aracın id'si (yeni araçta null)
+let pendingHandled = false;         // bekleyen kısa liste isteği bir kez işlensin
 
 // Veritabanından gelen metinleri HTML'e basmadan önce zararsız hale getirir (XSS koruması).
-// Örn. not alanına <script> yazılırsa kod olarak değil, düz yazı olarak görünür.
 function escapeHtml(value) {
   return String(value ?? "")
     .replace(/&/g, "&amp;")
@@ -39,77 +36,807 @@ function escapeHtml(value) {
     .replace(/'/g, "&#39;");
 }
 
-// --- GÜVENLİK VE ROL YÖNETİMİ (RBAC) ---
-// Not: Buradaki rol sadece arayüzü şekillendirmek içindir; asıl yetki kontrolü backend'de yapılır.
+// --- KİMLİK (Buradaki rol sadece arayüzü şekillendirir; asıl yetki kontrolü backend'de) ---
 function getAuthData() {
+  const guest = { role: "guest", id: null, username: "" };
   const token = localStorage.getItem("jwt_token");
-  if (!token) return { role: 'guest', id: null };
+  if (!token) return guest;
   try {
-    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-    const payload = JSON.parse(atob(base64));
-    // Süresi dolmuş token ile menüler görünüp istekler 403 almasın
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    const payload = JSON.parse(decodeURIComponent(escape(atob(base64))));
     if (payload.exp && payload.exp * 1000 < Date.now()) {
-      localStorage.removeItem("jwt_token");
-      return { role: 'guest', id: null };
+      localStorage.removeItem("jwt_token"); // süresi dolmuş oturum
+      return guest;
     }
-    return { role: payload.role || 'user', id: payload.id || null };
+    return { role: payload.role || "user", id: payload.id || null, username: payload.username || "" };
   } catch (e) {
-    return { role: 'guest', id: null };
+    return guest;
   }
 }
-const authData = getAuthData();
-const userRole = authData.role;
-const currentUserId = authData.id;
 
-// --- DOM ELEMENTS (HTML Bağlantıları) ---
-const UI = {
-  imageModal: document.querySelector('#image-modal'),
-  modalImage: document.querySelector('#modal-image'),
-  closeModal: document.querySelector('#close-modal'),
-  toggleBtn: document.getElementById("toggle-form-btn"),
-  formPanel: document.getElementById("add-car-panel"),
-  filterBody: document.getElementById("filter-body"),
-  filterStatus: document.getElementById("filter-status"),
-  sortBy: document.getElementById("sort-by"),
-  carForm: document.getElementById("car-form"),
-  tbody: document.getElementById("car-tbody"),
-  pageInfo: document.getElementById("page-info"),
-  prevPageBtn: document.getElementById("prev-page-btn"),
-  nextPageBtn: document.getElementById("next-page-btn"),
-  statTotal: document.getElementById("stat-total"),
-  statShortlist: document.getElementById("stat-shortlist"),
-  statRejected: document.getElementById("stat-rejected"),
-  filterBrand: document.getElementById("filter-brand"),
-  toggleFiltersBtn: document.getElementById("toggle-filters-btn"),
-  filtersPanel: document.getElementById("filters-panel"),
-  applyFiltersBtn: document.getElementById("apply-filters-btn"),
-  filterDrivetrain: document.getElementById("filter-drivetrain"),
-  filterMinPrice: document.getElementById("filter-min-price"),
-  filterMaxPrice: document.getElementById("filter-max-price"),
-  filterMinRange: document.getElementById("filter-min-range"),
-  filterMaxRange: document.getElementById("filter-max-range"),
-  searchInput: document.getElementById("searchInput"),
-  fabMainBtn: document.getElementById("fab-main-btn"),
-  fabMenu: document.getElementById("fab-menu"),
-  menuMyCars: document.getElementById("menu-my-cars"),
-  menuMyFavs: document.getElementById("menu-my-favs"),
-  menuCompare: document.getElementById("menu-compare"),
-  menuLogout: document.getElementById("menu-logout"),
-  fabContainer: document.getElementById("fab-container"),
-  fabBackdrop: document.getElementById("fab-backdrop")
+const auth = getAuthData();
+const isGuest = auth.role === "guest";
+const canManageListings = auth.role === "dealer" || auth.role === "superadmin";
+
+function authHeaders(json = true) {
+  const headers = { Authorization: `Bearer ${localStorage.getItem("jwt_token")}` };
+  if (json) headers["Content-Type"] = "application/json";
+  return headers;
+}
+
+// --- İKONLAR ---
+const ICONS = {
+  range: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>',
+  power: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14l4-4"/><path d="M3.3 17a9 9 0 1 1 17.4 0"/></svg>',
+  battery: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="17" height="10" rx="2"/><path d="M22 11v2M6 11v2M10 11v2"/></svg>',
+  edit: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
+  trash: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>',
+  chevron: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>',
+  plus: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+  close: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  bookmark: '<svg class="icon prompt-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21l-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>'
 };
 
-// --- AYARLAR (FAB) MENÜSÜ ---
+// --- DOM ELEMANLARI ---
+const $ = (id) => document.getElementById(id);
+const UI = {
+  themeToggle: $("theme-toggle"),
+  guestActions: $("guest-actions"),
+  userActions: $("user-actions"),
+  userName: $("user-name"),
+  logoutBtn: $("logout-btn"),
+  hero: $("hero"),
+  summary: $("summary"),
+  statTotal: $("stat-total"),
+  statShortlist: $("stat-shortlist"),
+  statRejected: $("stat-rejected"),
+  statShortlistCard: $("stat-shortlist-card"),
+  searchInput: $("searchInput"),
+  sortBy: $("sort-by"),
+  toggleFiltersBtn: $("toggle-filters-btn"),
+  compareOpenBtn: $("compare-open-btn"),
+  resultCount: $("result-count"),
+  activeFilters: $("active-filters"),
+  grid: $("car-grid"),
+  emptyState: $("empty-state"),
+  errorState: $("error-state"),
+  clearFiltersBtn: $("clear-filters-btn"),
+  loadMoreBtn: $("load-more-btn"),
+  compareBar: $("compare-bar"),
+  compareBarText: $("compare-bar-text"),
+  compareBarClear: $("compare-bar-clear"),
+  compareBarOpen: $("compare-bar-open"),
+  overlay: $("drawer-overlay"),
+  drawer: $("filters-panel"),
+  closeDrawerBtn: $("close-drawer-btn"),
+  applyFiltersBtn: $("apply-filters-btn"),
+  resetFiltersBtn: $("reset-filters-btn"),
+  filterStatusField: $("filter-status-field"),
+  modal: $("modal"),
+  modalBody: $("modal-body"),
+  carFormTemplate: $("car-form-template"),
+  statusMenu: $("status-menu"),
+  fabContainer: $("fab-container"),
+  fabBackdrop: $("fab-backdrop"),
+  fabMenu: $("fab-menu"),
+  fabMainBtn: $("fab-main-btn"),
+  menuAddCar: $("menu-add-car"),
+  menuMyCars: $("menu-my-cars"),
+  menuMyFavs: $("menu-my-favs"),
+  menuLogout: $("menu-logout")
+};
+
+// Filtre alanları: çekmecedeki her filtrenin API parametresi ve etiket metni
+const FILTERS = [
+  { el: $("filter-body"), param: "bodyType", label: (v) => v },
+  { el: $("filter-brand"), param: "brand", label: (v, el) => el.selectedOptions[0].textContent },
+  { el: $("filter-drivetrain"), param: "drivetrain", label: (v) => v },
+  { el: $("filter-status"), param: "status", label: (v) => CONFIG.STATUS_LABELS[v] },
+  { el: $("filter-min-price"), param: "minPrice", label: (v) => `En az ${formatPrice(v)} TL` },
+  { el: $("filter-max-price"), param: "maxPrice", label: (v) => `En çok ${formatPrice(v)} TL` },
+  { el: $("filter-min-range"), param: "minRange", label: (v) => `En az ${v} km` },
+  { el: $("filter-max-range"), param: "maxRange", label: (v) => `En çok ${v} km` }
+];
+
+// Bir filtre "Hepsi" ya da boş değilse aktiftir
+function isFilterActive(filter) {
+  return filter.el.value !== "" && filter.el.value !== "all";
+}
+
+function resetFilter(filter) {
+  filter.el.value = filter.el.tagName === "SELECT" ? "all" : "";
+}
+
+// =====================================================================
+//  TEMA
+// =====================================================================
+UI.themeToggle.addEventListener("click", () => {
+  const next = document.documentElement.getAttribute("data-theme") === "light" ? "dark" : "light";
+  document.documentElement.setAttribute("data-theme", next);
+  try { localStorage.setItem("theme", next); } catch (e) { /* gizli sekmede kayıt yapılamayabilir */ }
+});
+
+// =====================================================================
+//  ROL'E GÖRE ARAYÜZ
+// =====================================================================
+function setupRoleUI() {
+  if (isGuest) {
+    UI.guestActions.hidden = false;
+    UI.hero.hidden = false;
+    // Misafirin kişisel listesi olmadığı için "Durum" filtresi anlamsız
+    UI.filterStatusField.hidden = true;
+    return;
+  }
+
+  UI.userActions.hidden = false;
+  UI.userName.textContent = auth.username;
+  UI.summary.hidden = false;
+  UI.fabContainer.hidden = false;
+  document.body.classList.add("has-fab"); // mobilde karşılaştırma çubuğu dişli butona binmesin
+
+  if (canManageListings) {
+    UI.menuAddCar.hidden = false;
+    UI.menuMyCars.hidden = false;
+  }
+
+  UI.logoutBtn.addEventListener("click", logout);
+  UI.menuLogout.addEventListener("click", logout);
+  UI.menuAddCar.addEventListener("click", () => openCarForm(null));
+  UI.menuMyCars.addEventListener("click", () => setViewMode("mine"));
+  UI.menuMyFavs.addEventListener("click", () => setViewMode("favs"));
+  UI.statShortlistCard.addEventListener("click", () => setViewMode("favs"));
+  setupFab();
+}
+
+function logout() {
+  localStorage.removeItem("jwt_token");
+  window.location.href = "index.html";
+}
+
+// =====================================================================
+//  VERİ
+// =====================================================================
+function buildQuery() {
+  const [sort, order] = UI.sortBy.value.split("-");
+  const params = new URLSearchParams({ sort, order });
+  FILTERS.forEach((f) => {
+    if (isFilterActive(f) && f.param !== "status") params.set(f.param, f.el.value);
+  });
+  const search = UI.searchInput.value.trim();
+  if (search) params.set("search", search);
+  return params.toString();
+}
+
+async function fetchCars() {
+  try {
+    const response = await fetch(`${CONFIG.API_URL}?${buildQuery()}`);
+    if (!response.ok) throw new Error("Sunucu " + response.status + " döndü");
+    const fetchedCars = await response.json();
+
+    // Durumlar (kısa liste vb.) her kullanıcının kendi listesinden gelir
+    fetchedCars.forEach((car) => { car.status = "catalog"; });
+    if (!isGuest) {
+      try {
+        const listRes = await fetch(CONFIG.LIST_URL, { headers: authHeaders(false) });
+        if (listRes.ok) {
+          const personalList = await listRes.json();
+          fetchedCars.forEach((car) => {
+            const item = personalList.find((i) => i.carId === car._id);
+            if (item) car.status = item.status;
+          });
+        }
+      } catch (err) {
+        console.error("Kişisel liste alınamadı", err);
+      }
+    }
+
+    // Durum filtresi kişisel listeye göre tarayıcıda uygulanır
+    const statusValue = $("filter-status").value;
+    cars = statusValue !== "all" ? fetchedCars.filter((c) => c.status === statusValue) : fetchedCars;
+
+    UI.errorState.hidden = true;
+    visibleCount = CONFIG.PAGE_SIZE;
+    renderCars();
+    handlePendingShortlist();
+  } catch (error) {
+    console.error("Araçlar yüklenemedi:", error.message);
+    UI.errorState.hidden = false;
+  }
+}
+
+// Misafirken "Kısa listeye ekle"ye basıp sonra kayıt olan/giriş yapan kullanıcı için
+// o aracı otomatik olarak kısa listeye ekler.
+async function handlePendingShortlist() {
+  if (isGuest || pendingHandled) return;
+  pendingHandled = true;
+  const pendingId = localStorage.getItem(CONFIG.PENDING_KEY);
+  if (!pendingId) return;
+  localStorage.removeItem(CONFIG.PENDING_KEY);
+  const car = cars.find((c) => c._id === pendingId);
+  if (car && car.status !== "shortlist") {
+    await setStatus(pendingId, "shortlist");
+    showToast(`${car.brand} ${car.model} kısa listene eklendi.`);
+  }
+}
+
+// =====================================================================
+//  LİSTELEME
+// =====================================================================
+function getVisibleCars() {
+  if (viewMode === "mine") return cars.filter((c) => c.ownerId === auth.id);
+  if (viewMode === "favs") return cars.filter((c) => c.status === "shortlist");
+  return cars;
+}
+
+function renderCars() {
+  const list = getVisibleCars();
+  const shown = list.slice(0, visibleCount);
+
+  UI.grid.innerHTML = shown.map(cardHtml).join("");
+  UI.resultCount.innerHTML = `<strong>${list.length}</strong> araç bulundu`;
+  UI.emptyState.hidden = list.length > 0;
+  UI.loadMoreBtn.hidden = visibleCount >= list.length;
+
+  renderChips();
+  updateStats();
+  updateCompareBar();
+}
+
+function formatPrice(value) {
+  return Number(value).toLocaleString("tr-TR");
+}
+
+function getImageUrl(url) {
+  return url && url.startsWith("http") ? url : "";
+}
+
+function cardHtml(car) {
+  const id = escapeHtml(car._id);
+  const status = CONFIG.STATUS_LABELS[car.status] ? car.status : "catalog";
+  const img = getImageUrl(car.imageUrl);
+  const fallback = "https://ui-avatars.com/api/?size=400&background=random&name=" + encodeURIComponent(car.brand);
+  const checked = compareIds.includes(car._id) ? "checked" : "";
+  const canEdit = auth.role === "superadmin" || (auth.role === "dealer" && car.ownerId === auth.id);
+
+  const specs = [
+    `<span class="spec">${ICONS.range}${escapeHtml(car.range)} km</span>`,
+    car.horsepower ? `<span class="spec">${ICONS.power}${escapeHtml(car.horsepower)} BG</span>` : "",
+    car.battery ? `<span class="spec">${ICONS.battery}${escapeHtml(car.battery)} kWh</span>` : ""
+  ].join("");
+
+  // Misafir: "Kısa listeye ekle" (üyelik penceresi açar); giriş yapmış: durum etiketi (menü açar)
+  const action = isGuest
+    ? `<button type="button" class="btn btn-soft add-btn" data-action="add" data-id="${id}">${ICONS.plus}Kısa listeye ekle</button>`
+    : `<button type="button" class="status-btn status-${status}" data-action="status" data-id="${id}">${CONFIG.STATUS_LABELS[status]}${ICONS.chevron}</button>`;
+
+  const manage = canEdit
+    ? `<div class="card-actions">
+         <button type="button" class="icon-btn" data-action="edit" data-id="${id}" aria-label="Düzenle" title="Düzenle">${ICONS.edit}</button>
+         <button type="button" class="icon-btn delete-btn" data-action="delete" data-id="${id}" aria-label="Sil" title="Sil">${ICONS.trash}</button>
+       </div>`
+    : "";
+
+  return `
+    <article class="car-card${status === "rejected" ? " is-rejected" : ""}${checked ? " is-selected" : ""}" data-id="${id}">
+      <div class="car-media">
+        <img src="${escapeHtml(img || fallback)}" data-fallback="${escapeHtml(fallback)}" alt="${escapeHtml(car.brand + " " + car.model)}" loading="lazy" referrerpolicy="no-referrer">
+        <span class="body-badge">${escapeHtml(car.bodyType)}</span>
+        <label class="compare-check" title="Karşılaştırmaya ekle">
+          <input type="checkbox" data-action="compare" data-id="${id}" ${checked}> Karşılaştır
+        </label>
+        ${manage}
+      </div>
+      <div class="car-body">
+        <h3 class="car-title">${escapeHtml(car.brand)} <span class="model">${escapeHtml(car.model)}</span></h3>
+        <div class="specs">${specs}</div>
+        <div class="car-footer">
+          <span class="price">${formatPrice(car.price)} <small>TL</small></span>
+          ${action}
+        </div>
+      </div>
+    </article>`;
+}
+
+// Kart fotoğrafı yüklenemezse yedek görsele geç (error olayı kabarcıklanmadığı için capture=true)
+UI.grid.addEventListener("error", (e) => {
+  const img = e.target;
+  if (img.tagName === "IMG" && img.dataset.fallback && img.src !== img.dataset.fallback) {
+    img.src = img.dataset.fallback;
+  }
+}, true);
+
+// Kartlardaki tüm tıklamalar tek bir dinleyiciyle yönetilir
+UI.grid.addEventListener("click", (e) => {
+  const target = e.target.closest("[data-action]");
+  const card = e.target.closest(".car-card");
+  if (!card) return;
+
+  if (e.target.closest(".compare-check")) return; // onay kutusu "change" ile işlenir
+
+  if (!target) {
+    openDetail(card.dataset.id);
+    return;
+  }
+
+  const id = target.dataset.id;
+  switch (target.dataset.action) {
+    case "add":
+      openGuestPrompt(id);
+      break;
+    case "status":
+      openStatusMenu(target, id);
+      break;
+    case "edit":
+      openCarForm(id);
+      break;
+    case "delete":
+      if (confirm("Bu aracı silmek istediğinize emin misiniz?")) deleteCar(id);
+      break;
+  }
+});
+
+UI.grid.addEventListener("change", (e) => {
+  if (e.target.dataset.action === "compare") toggleCompare(e.target.dataset.id, e.target.checked);
+});
+
+UI.loadMoreBtn.addEventListener("click", () => {
+  visibleCount += CONFIG.PAGE_SIZE;
+  renderCars();
+});
+
+// =====================================================================
+//  ÖZET KARTLARI
+// =====================================================================
+let statsAnimated = false; // sayma animasyonu sadece ilk açılışta çalışır
+
+function updateStats() {
+  if (isGuest) return;
+  const values = [
+    [UI.statTotal, cars.length],
+    [UI.statShortlist, cars.filter((c) => c.status === "shortlist").length],
+    [UI.statRejected, cars.filter((c) => c.status === "rejected").length]
+  ];
+  UI.statShortlistCard.classList.toggle("is-active", viewMode === "favs");
+
+  // Her kartın güncel hedef değeri saklanır; devam eden sayma animasyonu eski değeri yazmasın diye
+  values.forEach(([el, value]) => { el.dataset.target = value; });
+
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (statsAnimated || cars.length === 0 || reduceMotion) {
+    values.forEach(([el, value]) => { el.textContent = value; });
+    return;
+  }
+  statsAnimated = true;
+  values.forEach(([el, value]) => countUp(el, value));
+}
+
+// Sayıyı 0'dan hedef değere ~0.9 saniyede, sona doğru yavaşlayarak çıkarır.
+// Animasyon sürerken değer değişirse (ör. araç kısa listeye eklendi) animasyon durur.
+function countUp(el, target) {
+  const start = performance.now();
+  function step(now) {
+    if (Number(el.dataset.target) !== target) return;
+    const progress = Math.min((now - start) / 900, 1);
+    el.textContent = Math.round(target * (1 - Math.pow(1 - progress, 3)));
+    if (progress < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+  // Sekme arka plandaysa tarayıcı animasyonu çalıştırmaz; süre sonunda doğru sayı yine de yazılır
+  setTimeout(() => {
+    if (Number(el.dataset.target) === target) el.textContent = target;
+  }, 950);
+}
+
+// =====================================================================
+//  GÖRÜNÜM MODU (Kendi İlanlarım / Kısa Listem)
+// =====================================================================
+function setViewMode(mode) {
+  viewMode = viewMode === mode ? "all" : mode;
+  UI.menuMyCars.classList.toggle("is-active", viewMode === "mine");
+  UI.menuMyFavs.classList.toggle("is-active", viewMode === "favs");
+  visibleCount = CONFIG.PAGE_SIZE;
+  renderCars();
+}
+
+// =====================================================================
+//  FİLTRELER, ETİKETLER, ARAMA, SIRALAMA
+// =====================================================================
+function renderChips() {
+  const chips = [];
+
+  if (viewMode !== "all") {
+    const label = viewMode === "mine" ? "Kendi ilanlarım" : "Kısa listem";
+    chips.push(`<button type="button" class="chip" data-chip="view">${label}${ICONS.close}</button>`);
+  }
+  const search = UI.searchInput.value.trim();
+  if (search) {
+    chips.push(`<button type="button" class="chip" data-chip="search">"${escapeHtml(search)}"${ICONS.close}</button>`);
+  }
+  FILTERS.forEach((f, i) => {
+    if (isFilterActive(f)) {
+      chips.push(`<button type="button" class="chip" data-chip="${i}">${escapeHtml(f.label(f.el.value, f.el))}${ICONS.close}</button>`);
+    }
+  });
+  if (chips.length > 1) {
+    chips.push(`<button type="button" class="chip chip-clear" data-chip="all">Tümünü temizle</button>`);
+  }
+  UI.activeFilters.innerHTML = chips.join("");
+}
+
+UI.activeFilters.addEventListener("click", (e) => {
+  const chip = e.target.closest("[data-chip]");
+  if (!chip) return;
+  const key = chip.dataset.chip;
+  if (key === "view") {
+    setViewMode(viewMode);
+    return;
+  }
+  if (key === "all") {
+    clearAllFilters();
+    return;
+  }
+  if (key === "search") UI.searchInput.value = "";
+  else resetFilter(FILTERS[Number(key)]);
+  fetchCars();
+});
+
+function clearAllFilters() {
+  FILTERS.forEach(resetFilter);
+  UI.searchInput.value = "";
+  viewMode = "all";
+  UI.menuMyCars.classList.remove("is-active");
+  UI.menuMyFavs.classList.remove("is-active");
+  fetchCars();
+}
+
+UI.clearFiltersBtn.addEventListener("click", clearAllFilters);
+
+function openDrawer() {
+  UI.drawer.classList.add("is-open");
+  UI.overlay.classList.add("is-open");
+}
+
+function closeDrawer() {
+  UI.drawer.classList.remove("is-open");
+  UI.overlay.classList.remove("is-open");
+}
+
+UI.toggleFiltersBtn.addEventListener("click", openDrawer);
+UI.closeDrawerBtn.addEventListener("click", closeDrawer);
+UI.overlay.addEventListener("click", closeDrawer);
+UI.applyFiltersBtn.addEventListener("click", () => {
+  fetchCars();
+  closeDrawer();
+});
+UI.resetFiltersBtn.addEventListener("click", () => FILTERS.forEach(resetFilter));
+UI.sortBy.addEventListener("change", fetchCars);
+
+// Arama: yazmayı bıraktıktan 400 ms sonra istek atılır (debounce)
+let searchTimeout;
+UI.searchInput.addEventListener("input", () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(fetchCars, 400);
+});
+
+// =====================================================================
+//  DURUM (Kısa liste, Test sürüşü, Elendi)
+// =====================================================================
+let statusMenuCarId = null;
+
+function openStatusMenu(button, id) {
+  statusMenuCarId = id;
+  const car = cars.find((c) => c._id === id);
+  UI.statusMenu.querySelectorAll("button").forEach((b) => {
+    b.classList.toggle("is-current", car && b.dataset.status === car.status);
+  });
+
+  UI.statusMenu.hidden = false;
+  const rect = button.getBoundingClientRect();
+  const menuWidth = UI.statusMenu.offsetWidth;
+  const left = Math.min(rect.right - menuWidth, window.innerWidth - menuWidth - 12);
+  UI.statusMenu.style.left = Math.max(12, left) + window.scrollX + "px";
+  UI.statusMenu.style.top = rect.bottom + 6 + window.scrollY + "px";
+}
+
+function closeStatusMenu() {
+  UI.statusMenu.hidden = true;
+  statusMenuCarId = null;
+}
+
+UI.statusMenu.addEventListener("click", (e) => {
+  const item = e.target.closest("[data-status]");
+  if (!item || !statusMenuCarId) return;
+  setStatus(statusMenuCarId, item.dataset.status);
+  closeStatusMenu();
+});
+
+document.addEventListener("click", (e) => {
+  if (!UI.statusMenu.hidden && !e.target.closest("#status-menu") && !e.target.closest('[data-action="status"]')) {
+    closeStatusMenu();
+  }
+});
+window.addEventListener("resize", closeStatusMenu);
+
+// Durumu önce ekranda günceller, sonra sunucuya kaydeder; hata olursa geri alır
+async function setStatus(id, status) {
+  const car = cars.find((c) => c._id === id);
+  if (!car) return;
+  const previous = car.status;
+  car.status = status;
+  renderCars();
+
+  try {
+    const response = await fetch(CONFIG.LIST_URL, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ carId: id, status })
+    });
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.error || "Durum kaydedilemedi.");
+    }
+  } catch (error) {
+    car.status = previous;
+    renderCars();
+    alert(error.message);
+  }
+}
+
+// =====================================================================
+//  PENCERE (MODAL)
+// =====================================================================
+function openModal(content, { small = false } = {}) {
+  UI.modalBody.innerHTML = "";
+  if (typeof content === "string") UI.modalBody.innerHTML = content;
+  else UI.modalBody.appendChild(content);
+  UI.modal.classList.toggle("is-small", small);
+  UI.modal.hidden = false;
+  document.body.style.overflow = "hidden";
+}
+
+function closeModal() {
+  UI.modal.hidden = true;
+  UI.modalBody.innerHTML = "";
+  document.body.style.overflow = "";
+  editingCarId = null;
+}
+
+UI.modal.addEventListener("click", (e) => {
+  if (e.target.closest("[data-close]")) closeModal();
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  if (!UI.modal.hidden) closeModal();
+  closeStatusMenu();
+  closeDrawer();
+  setFabOpen(false);
+});
+
+// --- Araç detayı ---
+function openDetail(id) {
+  const car = cars.find((c) => c._id === id);
+  if (!car) return;
+  const img = getImageUrl(car.imageUrl);
+  const item = (label, value) => `<div class="detail-item"><span>${label}</span><strong>${value}</strong></div>`;
+
+  openModal(`
+    ${img ? `<img class="detail-img" src="${escapeHtml(img)}" alt="${escapeHtml(car.brand + " " + car.model)}" referrerpolicy="no-referrer">` : ""}
+    <h2 class="detail-title">${escapeHtml(car.brand)} ${escapeHtml(car.model)}</h2>
+    <p class="detail-price">${formatPrice(car.price)} TL</p>
+    <div class="detail-grid">
+      ${item("Menzil (WLTP)", escapeHtml(car.range) + " km")}
+      ${item("Güç", car.horsepower ? escapeHtml(car.horsepower) + " BG" : "—")}
+      ${item("Batarya", car.battery ? escapeHtml(car.battery) + " kWh" : "—")}
+      ${item("Kasa tipi", escapeHtml(car.bodyType))}
+      ${item("Çekiş", escapeHtml(car.drivetrain || "—"))}
+      ${item("Durum", isGuest ? "—" : CONFIG.STATUS_LABELS[car.status] || "Katalog")}
+    </div>
+    ${car.note ? `<p class="detail-note">${escapeHtml(car.note)}</p>` : ""}
+    ${car.link && car.link.startsWith("http") ? `<a class="detail-link" href="${escapeHtml(car.link)}" target="_blank" rel="noopener">Kaynağa git →</a>` : ""}
+  `);
+}
+
+// --- Misafir: "Kısa listeye ekle" ---
+function openGuestPrompt(id) {
+  openModal(`
+    ${ICONS.bookmark}
+    <h2 class="modal-title">Listeni kaydet</h2>
+    <p class="prompt-text">Listeni kaydetmek için ücretsiz üye ol. Seçtiğin araç, kayıt olduktan sonra kısa listene otomatik eklenecek.</p>
+    <div class="prompt-actions">
+      <a href="login.html" class="btn btn-ghost">Giriş Yap</a>
+      <a href="login.html?kayit" class="btn btn-primary">Ücretsiz Kayıt Ol</a>
+    </div>
+  `, { small: true });
+
+  // Kullanıcı giriş/kayıt sayfasına giderse, dönüşte bu araç otomatik eklenir
+  UI.modalBody.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", () => localStorage.setItem(CONFIG.PENDING_KEY, id));
+  });
+}
+
+// =====================================================================
+//  KARŞILAŞTIRMA
+// =====================================================================
+function toggleCompare(id, checked) {
+  if (checked) {
+    if (compareIds.length >= 2) {
+      alert("En fazla 2 aracı karşılaştırabilirsin. Önce seçili araçlardan birini kaldır.");
+      renderCars();
+      return;
+    }
+    compareIds.push(id);
+  } else {
+    compareIds = compareIds.filter((x) => x !== id);
+  }
+  renderCars();
+}
+
+function updateCompareBar() {
+  UI.compareBar.hidden = compareIds.length === 0;
+  UI.compareBarText.textContent = compareIds.length === 1
+    ? "1 araç seçildi, bir tane daha seç"
+    : `${compareIds.length} araç seçildi`;
+  UI.compareBarOpen.disabled = compareIds.length < 2;
+}
+
+UI.compareBarClear.addEventListener("click", () => {
+  compareIds = [];
+  renderCars();
+});
+UI.compareBarOpen.addEventListener("click", () => openCompare(compareIds));
+UI.compareOpenBtn.addEventListener("click", () => {
+  // Seçim yoksa kısa listedeki ilk iki araç önerilir
+  const preselect = compareIds.length ? compareIds : cars.filter((c) => c.status === "shortlist").map((c) => c._id);
+  openCompare(preselect);
+});
+
+// Karşılaştırılan değerlerden daha iyi olanı yeşil gösterir
+const COMPARE_ROWS = [
+  { label: "Fiyat", value: (c) => c.price, text: (c) => formatPrice(c.price) + " TL", better: "lower" },
+  { label: "Menzil", value: (c) => c.range, text: (c) => c.range + " km", better: "higher" },
+  { label: "Güç", value: (c) => c.horsepower, text: (c) => (c.horsepower ? c.horsepower + " BG" : "—"), better: "higher" },
+  { label: "Batarya", value: (c) => c.battery, text: (c) => (c.battery ? c.battery + " kWh" : "—"), better: "higher" },
+  { label: "Kasa tipi", value: () => null, text: (c) => c.bodyType },
+  { label: "Çekiş", value: () => null, text: (c) => c.drivetrain || "—" }
+];
+
+function openCompare(preselect = []) {
+  const options = cars
+    .map((c) => `<option value="${escapeHtml(c._id)}">${escapeHtml(c.brand)} ${escapeHtml(c.model)}</option>`)
+    .join("");
+
+  openModal(`
+    <h2 class="modal-title">Araç karşılaştırma</h2>
+    <div class="compare-grid">
+      ${[0, 1].map((i) => `
+        <div class="compare-col">
+          <select data-compare-slot="${i}" aria-label="${i + 1}. araç">
+            <option value="">${i + 1}. aracı seç</option>${options}
+          </select>
+          <div data-compare-content="${i}"><p class="compare-empty">Karşılaştırmak için bir araç seç.</p></div>
+        </div>`).join("")}
+    </div>
+  `);
+
+  const selects = UI.modalBody.querySelectorAll("[data-compare-slot]");
+  selects.forEach((select, i) => {
+    if (preselect[i]) select.value = preselect[i];
+    select.addEventListener("change", renderCompare);
+  });
+  renderCompare();
+}
+
+function renderCompare() {
+  const selects = [...UI.modalBody.querySelectorAll("[data-compare-slot]")];
+  const chosen = selects.map((s) => cars.find((c) => c._id === s.value) || null);
+
+  chosen.forEach((car, i) => {
+    const box = UI.modalBody.querySelector(`[data-compare-content="${i}"]`);
+    if (!car) {
+      box.innerHTML = '<p class="compare-empty">Karşılaştırmak için bir araç seç.</p>';
+      return;
+    }
+    const other = chosen[1 - i];
+    const rows = COMPARE_ROWS.map((row) => {
+      let isBetter = false;
+      if (other && row.better && row.value(car) && row.value(other)) {
+        isBetter = row.better === "lower" ? row.value(car) < row.value(other) : row.value(car) > row.value(other);
+      }
+      return `<div class="compare-row"><span>${row.label}</span><strong class="${isBetter ? "is-better" : ""}">${escapeHtml(row.text(car))}</strong></div>`;
+    }).join("");
+    const img = getImageUrl(car.imageUrl);
+    box.innerHTML = `${img ? `<img src="${escapeHtml(img)}" alt="" referrerpolicy="no-referrer">` : ""}${rows}`;
+  });
+}
+
+// =====================================================================
+//  ARAÇ EKLEME / DÜZENLEME (bayi ve süper admin)
+// =====================================================================
+const FORM_FIELDS = ["brand", "model", "horsepower", "bodyType", "drivetrain", "range", "battery", "price", "imageUrl", "link", "note"];
+const NUMBER_FIELDS = ["horsepower", "range", "battery", "price"];
+
+function openCarForm(id) {
+  const content = UI.carFormTemplate.content.cloneNode(true);
+  openModal(content);
+  editingCarId = id;
+
+  const form = $("car-form");
+  if (id) {
+    const car = cars.find((c) => c._id === id);
+    FORM_FIELDS.forEach((f) => { $(f).value = car?.[f] ?? ""; });
+    $("car-form-title").textContent = "Aracı düzenle";
+    $("car-form-submit").textContent = "Değişiklikleri kaydet";
+  }
+  form.addEventListener("submit", submitCarForm);
+}
+
+async function submitCarForm(e) {
+  e.preventDefault();
+  const data = {};
+  FORM_FIELDS.forEach((f) => {
+    const value = $(f).value.trim();
+    if (value === "") return;
+    data[f] = NUMBER_FIELDS.includes(f) ? Number(value) : value;
+  });
+
+  const isEdit = Boolean(editingCarId);
+  try {
+    const response = await fetch(isEdit ? `${CONFIG.API_URL}/${editingCarId}` : CONFIG.API_URL, {
+      method: isEdit ? "PUT" : "POST",
+      headers: authHeaders(),
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      throw new Error(body.error || "İşlem başarısız.");
+    }
+    closeModal();
+    showToast(isEdit ? "Araç güncellendi." : "Araç eklendi.");
+    fetchCars();
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+async function deleteCar(id) {
+  try {
+    const response = await fetch(`${CONFIG.API_URL}/${id}`, { method: "DELETE", headers: authHeaders(false) });
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.error || "Araç silinemedi.");
+    }
+    compareIds = compareIds.filter((x) => x !== id);
+    showToast("Araç silindi.");
+    fetchCars();
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+// =====================================================================
+//  BİLDİRİM (TOAST)
+// =====================================================================
+function showToast(message) {
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.classList.add("is-hiding"), 2600);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+// =====================================================================
+//  AYARLAR MENÜSÜ (BALONCUK YAY MENÜ)
+// =====================================================================
 function setFabOpen(isOpen) {
   UI.fabContainer.classList.toggle("is-open", isOpen);
   UI.fabBackdrop.classList.toggle("is-open", isOpen);
   UI.fabMainBtn.setAttribute("aria-expanded", String(isOpen));
 }
 
-// Görünen menü baloncuklarını ana butonun etrafında, yukarıdan (90°) sola (180°) uzanan
-// çeyrek bir yay üzerine eşit aralıkla yerleştirir. Konum CSS'e --x / --y olarak verilir.
-// Her baloncuğun yazısı da yayın dışına doğru (merkezden uzağa) konur; böylece komşu
-// baloncukların üstüne binmez. Yazının boyutu ölçülerek baloncuğa değmeyecek mesafe bulunur.
+// Görünen baloncukları ana butonun etrafında, yukarıdan (90°) sola (180°) uzanan bir yay
+// üzerine eşit aralıkla yerleştirir. Yazılar yayın dışına doğru konur ki üst üste binmesin.
 function layoutFabItems() {
   const items = Array.from(UI.fabMenu.querySelectorAll(".fab-item:not([hidden])"));
   const radius = window.innerWidth < 480 ? 150 : 175;
@@ -123,634 +850,24 @@ function layoutFabItems() {
     item.style.setProperty("--delay", i * 45 + "ms");
 
     const label = item.querySelector(".fab-label");
-    const halfW = label.offsetWidth / 2, halfH = label.offsetHeight / 2;
-    const distance = bubbleRadius + gap + Math.abs(dx) * halfW + Math.abs(dy) * halfH;
+    const distance = bubbleRadius + gap + Math.abs(dx) * (label.offsetWidth / 2) + Math.abs(dy) * (label.offsetHeight / 2);
     item.style.setProperty("--lx", Math.round(dx * distance) + "px");
     item.style.setProperty("--ly", Math.round(dy * distance) + "px");
   });
 }
 
-function setFabLabel(button, text) {
-  button.querySelector(".fab-label").textContent = text;
-  layoutFabItems(); // Yazı uzunluğu değişti, konumunu yeniden hesapla
-}
-
-// "Kendi İlanlarım" / "Kısa Listem" görünümlerini aç-kapa yapar.
-// Asıl "cars" dizisi hiç değiştirilmez; ekrana sadece getVisibleCars() sonucu çizilir.
-function setViewMode(mode) {
-  viewMode = viewMode === mode ? "all" : mode;
-  if (UI.menuMyCars) {
-    UI.menuMyCars.classList.toggle("is-active", viewMode === "mine");
-    setFabLabel(UI.menuMyCars, viewMode === "mine" ? "Tüm Araçlar" : "Kendi İlanlarım");
-  }
-  if (UI.menuMyFavs) {
-    UI.menuMyFavs.classList.toggle("is-active", viewMode === "favs");
-    setFabLabel(UI.menuMyFavs, viewMode === "favs" ? "Tüm Araçlar" : "Kısa Listem");
-  }
-  currentPage = 1;
-  renderCars();
-}
-
-function getVisibleCars() {
-  if (viewMode === "mine") return cars.filter(c => c.ownerId === currentUserId);
-  if (viewMode === "favs") return cars.filter(c => c.status === "shortlist");
-  return cars;
-}
-
-// --- YETKİ (OTORİTE) KONTROLLERİNİ UYGULA ---
-function applySecurityRules() {
-  if (userRole === 'guest') {
-    if (UI.statShortlist) UI.statShortlist.parentElement.style.display = 'none';
-    if (UI.statRejected) UI.statRejected.parentElement.style.display = 'none';
-    if (UI.filterStatus && UI.filterStatus.parentElement) {
-      UI.filterStatus.parentElement.style.display = 'none'; 
-    }
-    return;
-  }
-
-  // Giriş yapanlara ayarlar menüsünü göster
-  UI.fabContainer.hidden = false;
-  UI.menuMyFavs.hidden = false;
-  UI.menuCompare.hidden = false;
-  UI.menuLogout.hidden = false;
-
-  // Sadece Bayi/Superadmin için "Araç Ekle" ve "Kendi İlanlarım" butonları
-  if (userRole === 'dealer' || userRole === 'superadmin') {
-    UI.toggleBtn.hidden = false;
-    UI.menuMyCars.hidden = false;
-  }
-
+function setupFab() {
   layoutFabItems();
   window.addEventListener("resize", layoutFabItems);
-
-  // Menü Aç/Kapa
-  UI.fabMainBtn.addEventListener("click", () => {
-    setFabOpen(!UI.fabContainer.classList.contains("is-open"));
-  });
-
-  // Menü dışına tıklanınca veya Esc'ye basılınca kapat
-  document.addEventListener("click", (e) => {
-    if (!UI.fabContainer.contains(e.target)) setFabOpen(false);
-  });
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") setFabOpen(false);
-  });
-
-  // Bir menü öğesine tıklanınca menüyü kapat
+  UI.fabMainBtn.addEventListener("click", () => setFabOpen(!UI.fabContainer.classList.contains("is-open")));
+  UI.fabBackdrop.addEventListener("click", () => setFabOpen(false));
   UI.fabMenu.addEventListener("click", (e) => {
     if (e.target.closest(".fab-item")) setFabOpen(false);
   });
-
-  // Menü İşlevleri
-  UI.menuLogout.addEventListener("click", () => {
-    localStorage.removeItem("jwt_token");
-    window.location.href = "index.html";
-  });
-
-  UI.menuMyCars.addEventListener("click", () => setViewMode("mine"));
-  UI.menuMyFavs.addEventListener("click", () => setViewMode("favs"));
-  UI.menuCompare.addEventListener("click", openCompareModal);
-}
-applySecurityRules();
-
-async function fetchCars(){
-  try{
-    const brand = UI.filterBrand.value;
-    const body = UI.filterBody.value;
-    const status = UI.filterStatus.value;
-    const drivetrain = UI.filterDrivetrain.value;
-    const sortValue = UI.sortBy.value;
-    const minPrice = UI.filterMinPrice.value;
-    const maxPrice = UI.filterMaxPrice.value;
-    const minRange = UI.filterMinRange.value;
-    const maxRange = UI.filterMaxRange.value;
-    const searchValue = UI.searchInput ? UI.searchInput.value.trim() : "";
-    const [sort, order] = sortValue.split("-");
-    
-    const params = new URLSearchParams({
-      brand: brand,
-      bodyType: body,
-      status: status,
-      sort: sort,
-      order: order,
-      minPrice: minPrice,
-      maxPrice: maxPrice,
-      minRange: minRange,
-      maxRange: maxRange,
-      drivetrain: drivetrain,
-      search: searchValue
-    });
-
-    const queryUrl = `${CONFIG.API_URL}?${params.toString()}`;
-    const response = await fetch(queryUrl);
-    if (!response.ok) throw new Error("Sunucu " + response.status + " döndü");
-    let fetchedCars = await response.json();
-
-    // EĞER KULLANICI İSE KENDİ KİŞİSEL LİSTESİNİ (Kısa Liste vs.) ÇEK VE BİRLEŞTİR
-    if (userRole === 'user') {
-      try {
-        const token = localStorage.getItem("jwt_token");
-        const listRes = await fetch(CONFIG.API_URL.replace("/cars", "/users/me/list"), {
-          headers: { "Authorization": `Bearer ${token}` }
-        });
-        if (listRes.ok) {
-          const personalList = await listRes.json();
-          fetchedCars.forEach(car => {
-            car.status = "catalog"; // Kullanıcılar için araba varsayılan olarak katalogdadır
-            const personalItem = personalList.find(item => item.carId === car._id);
-            if (personalItem) car.status = personalItem.status;
-          });
-        }
-      } catch (err) {
-        console.error("Kişisel liste çekilemedi", err);
-      }
-    }
-    cars = fetchedCars;
-
-    currentPage = 1; 
-    renderCars();
-  }
-  catch(error){
-    console.error("Arabalar yüklenirken hata oluştu.", error.message)
-  }
 }
 
-let editingCarId = null;
-
-// Formu kapatır ve düzenleme modundan çıkar (Ekle/Düzenle sonrası ve iptal için ortak)
-function closeCarForm() {
-  UI.carForm.reset();
-  UI.formPanel.hidden = true;
-  editingCarId = null;
-  setFabLabel(UI.toggleBtn, "Araç Ekle");
-  document.querySelector("#car-form button[type='submit']").textContent = "Ekle";
-}
-
-UI.toggleBtn.addEventListener("click", function () {
-  if (!UI.formPanel.hidden) {
-    closeCarForm();
-    return;
-  }
-  UI.formPanel.hidden = false;
-  setFabLabel(UI.toggleBtn, "Formu Kapat");
-  UI.formPanel.scrollIntoView({ behavior: "smooth" });
-});
-
-UI.carForm.addEventListener("submit",async function (e) { 
-  e.preventDefault();
-  
-  const carData = {
-    brand: document.getElementById("brand").value,
-    model: document.getElementById("model").value,
-    horsepower: document.getElementById("horsepower").value ? Number(document.getElementById("horsepower").value) : undefined,
-    bodyType: document.getElementById("bodyType").value,
-    drivetrain: document.getElementById("drivetrain").value,
-    range: Number(document.getElementById("range").value),
-    battery: Number(document.getElementById("battery").value),
-    price: Number(document.getElementById("price").value),
-    status: document.getElementById("status").value,
-    imageUrl: document.getElementById("imageUrl").value,
-    link: document.getElementById("link").value,
-    note: document.getElementById("note").value,
-  };
-
-  if (editingCarId) {
-    editCar(editingCarId, carData);
-  } else {
-    addCar(carData);
-  }
-});
-
-function openEditModal(id) {
-  const car = cars.find(c => c._id === id);
-  if (!car) return;
-
-  editingCarId = id;
-  document.getElementById("brand").value = car.brand;
-  document.getElementById("model").value = car.model;
-  document.getElementById("horsepower").value = car.horsepower || "";
-  document.getElementById("bodyType").value = car.bodyType;
-  document.getElementById("drivetrain").value = car.drivetrain || "";
-  document.getElementById("range").value = car.range;
-  document.getElementById("battery").value = car.battery || "";
-  document.getElementById("price").value = car.price;
-  document.getElementById("status").value = car.status;
-  document.getElementById("imageUrl").value = car.imageUrl || "";
-  document.getElementById("link").value = car.link || "";
-  document.getElementById("note").value = car.note || "";
-
-  UI.formPanel.hidden = false;
-  setFabLabel(UI.toggleBtn, "Düzenlemeyi İptal Et");
-  document.querySelector("#car-form button[type='submit']").textContent = "Değişiklikleri Kaydet";
-  UI.formPanel.scrollIntoView({ behavior: "smooth" });
-}
-
-async function editCar(id, updatedCar) {
-  try {
-    const token = localStorage.getItem("jwt_token");
-    const response = await fetch(CONFIG.API_URL + "/" + id, {
-      method: "PUT",
-      headers: { 
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}` 
-      },
-      body: JSON.stringify(updatedCar)
-    });
-    
-    if (response.ok) {
-      fetchCars();
-      closeCarForm();
-    } else {
-      const data = await response.json();
-      alert("Hata: " + data.error);
-    }
-  } catch (error) {
-    console.error("Sunucuya bağlanılamadı", error);
-  }
-}
-
-function renderCars() {
-  UI.tbody.innerHTML = "";
-  const visibleCars = getVisibleCars();
-  const totalPages = Math.ceil(visibleCars.length / CONFIG.ITEMS_PER_PAGE);
-  updateStats();
-  // 1. Boş Liste Durumu
-  if (visibleCars.length === 0) {
-    const emptyText = viewMode === "mine" ? "Henüz ilan eklemediniz."
-      : viewMode === "favs" ? "Kısa listenizde araç yok."
-      : "Aranan kriterlere uygun araç bulunamadı.";
-    UI.tbody.innerHTML = '<tr><td colspan="8" class="empty-state">' + emptyText + '</td></tr>';
-    updatePaginationUI(0); // İşi uzmana devrettik!
-    return;
-  }
-  const currentCars = getPaginatedCars(visibleCars, totalPages);
-  // 3. Ekrana Çizme
-  currentCars.forEach(function (car) {
-    const tr = document.createElement("tr");
-    if (car.status === "rejected") {
-      tr.classList.add("is-rejected");
-    }
-    tr.innerHTML = generateRowHtml(car);
-    UI.tbody.appendChild(tr);
-  });
-  // 4. Alt Kısım Güncellemeleri
-  updatePaginationUI(totalPages); // İşi uzmana devrettik!
-  }
-
-
-UI.tbody.addEventListener("click",async function (e) {
-   if (e.target.classList.contains("delete-btn")) {
-    const id = e.target.dataset.id;
-    if(confirm("Bu aracı silmek istediğinize emin misiniz?")) deleteCar(id);
-  } else if (e.target.classList.contains("edit-btn")) {
-    const id = e.target.dataset.id;
-    openEditModal(id);
-  }
-     else if (e.target.classList.contains("badge")) {
-    const id = e.target.dataset.id; // btn-icon sildiğimiz için ID'yi direkt badge'den okuyoruz
-    if (id) UpdateCarStatus(id);
-  }
-
-  else if (e.target.classList.contains("car-thumb")) {
-    openMobileCard(e.target);
-  }
-});
-
-let statsAnimated = false; // Sayma animasyonu sadece sayfa ilk açıldığında çalışır
-
-function updateStats() {
-  const values = [
-    [UI.statTotal, cars.length],
-    [UI.statShortlist, cars.filter(car => car.status === "shortlist").length],
-    [UI.statRejected, cars.filter(car => car.status === "rejected").length]
-  ];
-
-  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (statsAnimated || cars.length === 0 || reduceMotion) {
-    values.forEach(([el, value]) => { el.textContent = value; });
-    return;
-  }
-  statsAnimated = true;
-  values.forEach(([el, value]) => countUp(el, value));
-}
-
-// Sayıyı 0'dan hedef değere ~0.9 saniyede, sona doğru yavaşlayarak çıkarır
-function countUp(el, target) {
-  const duration = 900;
-  const start = performance.now();
-  function step(now) {
-    const progress = Math.min((now - start) / duration, 1);
-    const eased = 1 - Math.pow(1 - progress, 3);
-    el.textContent = Math.round(target * eased);
-    if (progress < 1) requestAnimationFrame(step);
-  }
-  requestAnimationFrame(step);
-}
-
-UI.toggleFiltersBtn.addEventListener("click", function () {
-  UI.filtersPanel.classList.toggle("is-open");
-  document.getElementById("drawer-overlay").classList.toggle("is-open");
-});
-
-function closeDrawer() {
-  UI.filtersPanel.classList.remove("is-open");
-  document.getElementById("drawer-overlay").classList.remove("is-open");
-}
-
-document.getElementById("close-drawer-btn").addEventListener("click", closeDrawer);
-document.getElementById("drawer-overlay").addEventListener("click", closeDrawer);
-
-UI.applyFiltersBtn.addEventListener("click", function () {
-  fetchCars();
-  closeDrawer();
-});
-
-UI.sortBy.addEventListener("change", fetchCars);
-
-// Arama kutusu için Debounce (Yazarken her harfte istek atmasını engeller, yazmayı bitirince atar)
-let searchTimeout;
-if (UI.searchInput) {
-  UI.searchInput.addEventListener("input", () => {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => {
-      fetchCars();
-    }, 400); // Kullanıcı yazmayı bıraktıktan 400ms sonra arama yapar
-  });
-}
-
+// =====================================================================
+//  BAŞLAT
+// =====================================================================
+setupRoleUI();
 fetchCars();
-
-// --- Sayfalama Buton Dinleyicileri ---
-UI.prevPageBtn.addEventListener("click", function () {
-  if (currentPage > 1) {
-    currentPage--;
-    renderCars();
-    window.scrollTo({ top: 0, behavior: "smooth" }); // Sayfanın en tepesine yumuşakça kaydır
-  }
-});
-
-UI.nextPageBtn.addEventListener("click", function () {
-  const totalPages = Math.ceil(getVisibleCars().length / CONFIG.ITEMS_PER_PAGE);
-  if (currentPage < totalPages) {
-    currentPage++;
-    renderCars();
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-});
-
-
-UI.closeModal.addEventListener('click', function () {
-  UI.imageModal.classList.add('modal-hidden');
-}); 
-
-UI.imageModal.addEventListener("click", function(e) {
-  if (e.target.id === "image-modal") {
-    UI.imageModal.classList.add("modal-hidden");
-  }
-});
-// FUNCTIONS // 
- function openMobileCard(imageTarget){
-    UI.modalImage.src = imageTarget.src; // Hatayi burada duzelttik
-    const satir = imageTarget.closest("tr");
-    const markaText = satir.querySelector('td[data-label="Araç"]').textContent;
-    const fiyatText = satir.querySelector('td[data-label="Fiyat"]').textContent;
-    const gucText = satir.querySelector('td[data-label="Güç"]').textContent;
-    const menzilText = satir.querySelector('td[data-label="Menzil"]').textContent;
-
-    document.querySelector('#modal-brand').textContent = markaText;
-    document.querySelector('#modal-price').textContent = fiyatText;
-    document.querySelector('#modal-hp').textContent = gucText;
-    document.querySelector('#modal-range').textContent = menzilText;
-
-    UI.imageModal.classList.remove("modal-hidden");
-
-  }
-  
-  window.updateCompareUI = function(boxNum) {
-    const selectEl = document.getElementById('compare-select-' + boxNum);
-    const contentEl = document.getElementById('compare-content-' + boxNum);
-    const carId = selectEl.value;
-    
-    if (!carId) {
-      contentEl.style.display = 'none';
-      return;
-    }
-    
-    const car = cars.find(c => c._id === carId);
-    if (car) {
-      document.getElementById('comp-img-' + boxNum).src = car.imageUrl || 'https://placehold.co/150';
-      document.getElementById('comp-price-' + boxNum).textContent = car.price.toLocaleString() + ' TL';
-      document.getElementById('comp-range-' + boxNum).textContent = car.range + ' km';
-      document.getElementById('comp-battery-' + boxNum).textContent = (car.battery || '?') + ' kWh';
-      document.getElementById('comp-drivetrain-' + boxNum).textContent = car.drivetrain || 'Bilinmiyor';
-      document.getElementById('comp-hp-' + boxNum).textContent = car.horsepower ? car.horsepower + ' BG' : '—';
-      contentEl.style.display = 'block';
-    }
-  };
-
-  function openCompareModal() {
-    let modal = document.getElementById('compare-modal');
-    if (modal) modal.remove();
-
-    const optionsHtml = cars.map(c => `<option value="${escapeHtml(c._id)}">${escapeHtml(c.brand)} ${escapeHtml(c.model)}</option>`).join('');
-    
-    const modalHtml = `
-      <div id="compare-modal" class="compare-modal-overlay">
-        <div class="compare-modal-card">
-          <h2 class="compare-title">⚖️ Araç Karşılaştırma</h2>
-          <div class="compare-grid">
-            <!-- Araç 1 -->
-            <div class="compare-item">
-              <select id="compare-select-1" class="compare-select" onchange="window.updateCompareUI(1)">
-                <option value="">1. Aracı Seçin</option>
-                ${optionsHtml}
-              </select>
-              <div id="compare-content-1" style="display:none; text-align:center;">
-                 <img id="comp-img-1" src="" style="width:100%; height:180px; object-fit:cover; border-radius:8px; margin-bottom:15px;">
-                 <div class="compare-stat"><span>Fiyat:</span> <strong id="comp-price-1"></strong></div>
-                 <div class="compare-stat"><span>Güç:</span> <strong id="comp-hp-1"></strong></div>
-                 <div class="compare-stat"><span>Menzil:</span> <strong id="comp-range-1"></strong></div>
-                 <div class="compare-stat"><span>Batarya:</span> <strong id="comp-battery-1"></strong></div>
-                 <div class="compare-stat"><span>Çekiş:</span> <strong id="comp-drivetrain-1"></strong></div>
-              </div>
-            </div>
-            <!-- Araç 2 -->
-            <div class="compare-item">
-              <select id="compare-select-2" class="compare-select" onchange="window.updateCompareUI(2)">
-                <option value="">2. Aracı Seçin</option>
-                ${optionsHtml}
-              </select>
-              <div id="compare-content-2" style="display:none; text-align:center;">
-                 <img id="comp-img-2" src="" style="width:100%; height:180px; object-fit:cover; border-radius:8px; margin-bottom:15px;">
-                 <div class="compare-stat"><span>Fiyat:</span> <strong id="comp-price-2"></strong></div>
-                 <div class="compare-stat"><span>Güç:</span> <strong id="comp-hp-2"></strong></div>
-                 <div class="compare-stat"><span>Menzil:</span> <strong id="comp-range-2"></strong></div>
-                 <div class="compare-stat"><span>Batarya:</span> <strong id="comp-battery-2"></strong></div>
-                 <div class="compare-stat"><span>Çekiş:</span> <strong id="comp-drivetrain-2"></strong></div>
-              </div>
-            </div>
-          </div>
-          <button type="button" onclick="document.getElementById('compare-modal').remove()" class="btn btn-primary" style="width:100%; margin-top:25px; padding:15px; font-size:16px;">Kapat</button>
-        </div>
-      </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-    
-    // Favorileri otomatik seç (varsa)
-    const favCars = cars.filter(c => c.status === 'shortlist');
-    if (favCars.length >= 1) {
-      document.getElementById('compare-select-1').value = favCars[0]._id;
-      window.updateCompareUI(1);
-    }
-    if (favCars.length >= 2) {
-      document.getElementById('compare-select-2').value = favCars[1]._id;
-      window.updateCompareUI(2);
-    }
-  }
-    async function UpdateCarStatus(id) {  
-  
-    const car = cars.find(function (c) {
-      return c._id === id;
-    });
-    const currentIndex = CONFIG.STATUS_ORDER.indexOf(car.status);
-    const newStatus = CONFIG.STATUS_ORDER[(currentIndex + 1) % CONFIG.STATUS_ORDER.length];
-    try {
-      const token = localStorage.getItem("jwt_token");
-      const canEditGlobally = userRole === 'dealer' || userRole === 'superadmin';
-      
-      // Kullanıcıysa kişisel listesine yaz, Bayi/Superadmin ise global listeye (PATCH)
-      const endpoint = canEditGlobally ? `${CONFIG.API_URL}/${id}/status` : CONFIG.API_URL.replace("/cars", "/users/me/list");
-      const method = canEditGlobally ? "PATCH" : "POST";
-      const bodyPayload = canEditGlobally ? { status: newStatus } : { carId: id, status: newStatus };
-
-      const response = await fetch(endpoint, {
-        method: method,
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify(bodyPayload)
-      });
-      if (response.ok) {
-        fetchCars(); 
-      } else {
-        const data = await response.json();
-        alert("Durum güncellenemedi: " + (data.error || "Yetkiniz yok."));
-      }
-    } catch (error) {
-      console.error("Sunucuya bağlanılamadı:", error);
-    }
-  }
-
-  async function deleteCar(id) {
-    try {
-      const token = localStorage.getItem("jwt_token");
-      const response = await fetch(CONFIG.API_URL + "/" + id, {
-        method: "DELETE",
-        headers: { "Authorization": `Bearer ${token}` }
-      });
-      if (response.ok) {
-        fetchCars(); 
-      } else {
-        const data = await response.json().catch(() => ({}));
-        alert("Araç silinemedi: " + (data.error || "Bilinmeyen hata."));
-      }
-    } catch (error) {
-      console.error("Sunucuya bağlanılamadı:", error);
-    }
-  }
-
-  async function addCar(newCar) {
-  try {
-    const token = localStorage.getItem("jwt_token");
-    const response = await fetch(CONFIG.API_URL, {
-      method: "POST",
-      headers: { 
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}` 
-      },
-      body: JSON.stringify(newCar)
-    });
-    
-    if (response.ok) {
-      fetchCars(); // Başarılıysa tabloyu güncelle
-      closeCarForm(); // Formu temizle ve gizle
-    } else {
-      const data = await response.json().catch(() => ({}));
-      alert("Araç eklenemedi: " + (data.error || "Bilinmeyen hata."));
-    }
-  } catch (error) {
-    console.error("Sunucuya bağlanılamadı", error);
-  }
-}
-
-function generateRowHtml(car){
-  // Tüm veritabanı alanları escapeHtml'den geçer; resim yüklenemezse yedek görsel
-  // tbody üzerindeki "error" dinleyicisi tarafından data-fallback'ten alınır (inline onerror yok).
-  const fallbackUrl = "https://ui-avatars.com/api/?name=" + encodeURIComponent(car.brand) + "&background=random&size=100";
-  const id = escapeHtml(car._id);
-  const status = CONFIG.STATUS_LABELS[car.status] ? car.status : "catalog";
-
-  // ROL BAZLI TABLO GÖRÜNÜMÜ
-  let statusHtml = `<span class="badge badge-${status}" style="cursor: pointer;" data-id="${id}">${CONFIG.STATUS_LABELS[status]}</span>`;
-  let actionsHtml = ``;
-
-  if (userRole === 'guest') {
-    // Misafir: Durumları değiştiremez/göremez, Araç silemez. Sadece aracı inceler.
-    statusHtml = `<span style="color: rgba(255, 255, 255, 0.3); font-size: 12px;">Gizli</span>`;
-  } else if (userRole === 'superadmin' || (userRole === 'dealer' && car.ownerId === currentUserId)) {
-    // Sadece superadmin VEYA aracı kendi ekleyen bayi silebilir/düzenleyebilir
-    actionsHtml = `
-      <button type="button" class="btn-icon edit-btn" style="color: #ffc107;" data-id="${id}">Düzenle</button>
-      <button type="button" class="btn-icon delete-btn" data-id="${id}">Sil</button>
-    `;
-  }
-
-  return `
-    <td data-label="Fotoğraf"><img src="${escapeHtml(getOptimizedImageUrl(car.imageUrl))}" data-fallback="${escapeHtml(fallbackUrl)}" alt="${escapeHtml(car.brand)}" class="car-thumb" loading="lazy" referrerpolicy="no-referrer"></td>
-    <td data-label="Araç"><strong>${escapeHtml(car.brand)}</strong> ${escapeHtml(car.model)} ${car.note ? '<span class="row-note">' + escapeHtml(car.note) + '</span>' : ''}</td>
-    <td data-label="Güç">${formatHorsepower(car.horsepower)}</td>
-    <td data-label="Kasa">${escapeHtml(car.bodyType)}</td>
-    <td data-label="Menzil">${escapeHtml(car.range)} km</td>
-    <td data-label="Fiyat">${Number(car.price).toLocaleString("tr-TR")} TL</td>
-    <td data-label="Durum">${statusHtml}</td>
-    <td class="row-actions">${actionsHtml}</td>
-  `;
-}
-
-// Tablodaki bir resim yüklenemezse yedek görsele geç (error olayı kabarcıklanmaz, bu yüzden capture=true)
-UI.tbody.addEventListener("error", function (e) {
-  const img = e.target;
-  if (img.tagName === "IMG" && img.dataset.fallback && img.src !== img.dataset.fallback) {
-    img.src = img.dataset.fallback;
-  }
-}, true);
-
-// Güç bilgisi olmayan araçlarda boş hücre yerine "—" gösterilir
-function formatHorsepower(hp) {
-  return hp ? escapeHtml(hp) + " BG" : "—";
-}
-
-function getOptimizedImageUrl(url) {
-  if (!url || !url.startsWith("http")) return "https://placehold.co/60x40";
-  return url;
-}
-
-function updatePaginationUI(totalPages) {
-  // Eğer hiç araba yoksa (totalPages 0 ise) ekranda Sayfa 0/0 yerine 1/1 yazsın
-  const displayTotal = totalPages === 0 ? 1 : totalPages;
-  
-  UI.pageInfo.textContent = "Sayfa " + currentPage + " / " + displayTotal;
-  UI.prevPageBtn.disabled = (currentPage === 1);
-  UI.nextPageBtn.disabled = (currentPage === displayTotal || displayTotal === 0);
-}
-
-function getPaginatedCars(list, totalPages) {
-  if (currentPage > totalPages) currentPage = totalPages;
-  if (currentPage < 1) currentPage = 1;
-  
-  const startIndex = (currentPage - 1) * CONFIG.ITEMS_PER_PAGE;
-  const endIndex = startIndex + CONFIG.ITEMS_PER_PAGE;
-  
-  return list.slice(startIndex, endIndex); // Sadece o sayfaya ait arabaları kes ve yolla
-}

@@ -1545,3 +1545,23 @@ label {
     margin: 0 auto;
   }
 }
+
+/* --- GİRİŞ SAYFASI: EMOJİ YERİNE ÇİZGİ İKONLAR --- */
+.input-group .icon {
+  display: inline-flex;
+  line-height: 0;
+}
+
+.input-group .icon svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.input-group .eye-icon.is-visible {
+  color: #ffffff;
+}

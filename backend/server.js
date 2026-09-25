@@ -71,8 +71,15 @@ app.post("/api/auth/register", async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    await User.create({ username: username.trim(), password: hashedPassword, role: role || 'user' });
-    res.status(201).json({ message: "Kullanıcı başarıyla oluşturuldu." });
+    const user = await User.create({ username: username.trim(), password: hashedPassword, role: role || 'user' });
+
+    // Kayıt olan kullanıcı tekrar giriş yapmak zorunda kalmasın diye token da döndürülür
+    const token = jwt.sign(
+      { id: user._id, username: user.username, role: user.role },
+      JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+    res.status(201).json({ message: "Kullanıcı başarıyla oluşturuldu.", token, role: user.role });
   } catch (error) {
     res.status(500).json({ error: "Kayıt sırasında sunucu hatası oluştu." });
   }

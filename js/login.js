@@ -24,6 +24,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // login.html?kayit adresiyle gelindiyse doğrudan kayıt formu açılır
+  if (new URLSearchParams(window.location.search).has('kayit') && loginForm && registerForm) {
+    loginForm.style.display = 'none';
+    registerForm.style.display = 'block';
+  }
+
   // --- GİRİŞ YAPMA (LOGIN) MANTIĞI ---
   if (loginForm) {
     loginForm.addEventListener('submit', (e) => {
@@ -47,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(data => {
         if (data.token) {
           localStorage.setItem("jwt_token", data.token);
-          window.location.href = 'app.html';
+          window.location.href = 'index.html';
         } else {
           loginError.textContent = data.error || 'Hatalı kullanıcı adı veya şifre!';
           loginError.style.display = 'block';
@@ -97,8 +103,14 @@ document.addEventListener('DOMContentLoaded', () => {
       })
       .then(response => response.json())
       .then(data => {
+        if (data.token) {
+          // Kayıt olan kullanıcı otomatik olarak giriş yapar ve kataloğa döner
+          localStorage.setItem("jwt_token", data.token);
+          window.location.href = 'index.html';
+          return;
+        }
         if (data.message) {
-          // Başarılı kayıt
+          // Başarılı kayıt (sunucu token döndürmüyorsa eski davranış: giriş formuna yönlendir)
           registerMsg.textContent = 'Başarılı! Şimdi giriş yapabilirsiniz.';
           registerMsg.style.color = '#22c55e'; // Yeşil
           registerMsg.style.display = 'block';
@@ -151,13 +163,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const targetId = icon.getAttribute('data-target');
       const input = document.getElementById(targetId);
       if (input) {
-        if (input.type === 'password') {
-          input.type = 'text';
-          icon.textContent = '🙈';
-        } else {
-          input.type = 'password';
-          icon.textContent = '👁️';
-        }
+        const show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        icon.classList.toggle('is-visible', show);
+        icon.setAttribute('aria-label', show ? 'Şifreyi gizle' : 'Şifreyi göster');
       }
     });
   });
